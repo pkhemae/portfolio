@@ -1,5 +1,6 @@
 import NavbarComponent from "./components/Navbar"
-import Hero from './components/Hero';
+import HeroSection from './components/pages/HeroSection';
+import { StorySection } from "./components/pages/StorySection";
 
 function App() {
 
@@ -7,7 +8,8 @@ function App() {
     <>
       <div>
         <NavbarComponent />
-        <Hero />
+        <HeroSection />
+        <StorySection />
       </div>
     </>
   )
