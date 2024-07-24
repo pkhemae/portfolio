@@ -1,7 +1,5 @@
 "use client";
-
-import React from "react";
-import { cn } from "../../lib/utils";
+import { Link } from "@nextui-org/react";
 import { HoverBorderGradient } from "../ui/hover-border-gradient";
 import { Spotlight } from "../ui/Spotlight";
 
@@ -26,7 +24,12 @@ function HeroSection() {
         as="button"
         className="dark:bg-black bg-white text-black dark:text-white flex items-center space-x-2"
       >
-        <span>En savoir plus</span>
+        <Link
+          href="#projects"
+          className="text-white"
+        >
+          <span>Découvrir mes projets</span>
+        </Link>
       </HoverBorderGradient>
     </div>
       </div>

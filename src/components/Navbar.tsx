@@ -41,7 +41,7 @@ export default function NavbarComponent() {
           </Link>
         </NavbarItem>
         <NavbarItem>
-          <Link color="foreground" href="#">
+          <Link color="foreground" href="#projects">
             Projets
           </Link>
         </NavbarItem>
