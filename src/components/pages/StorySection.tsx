@@ -1,7 +1,5 @@
 "use client";
-import React from "react";
-import { Button, Link, Image } from "@nextui-org/react";
-import { twMerge } from "tailwind-merge";
+import { Image } from "@nextui-org/react";
 import { TracingBeam } from "../ui/tracing-beam";
 
 export function StorySection() {
@@ -43,7 +41,7 @@ const dummyContent = [
     description: (
       <>
         <Image
-            src="https://cdn.discordapp.com/attachments/1025050622485086228/1265357840009265162/ddcecb54f40bd7636603dde6c2b14984_3_1.jpeg?ex=66a137d2&is=669fe652&hm=88181ae7e11bc5a13b54b2951190605b8a7bef5740c5161dbb9a21baca35e660&"
+            src="https://pkhemae.github.io/cdn/khem/khem.jpeg"
             className={"md:float-left rounded-lg mr-5 pt-4 mb-16"}
             width="300"
         />
@@ -51,12 +49,6 @@ const dummyContent = [
           Je m'appelle Khémara Parc, j'ai 18 ans et je suis passionné par le développement web et le design. Entreprendre est ma passion, une passion qui m'a poussé à développer de nombreuses compétences.<br/>
           Je me concentre principalement sur le développement d'applications <span className="text-blue-400">frontend</span> et le design d'<span className="text-blue-400">interfaces utilisateur</span>.
         </p>
-
-        <Link href={'https://x.com/pkhemae'} target={'_blank'}>
-            <Button className="mt-3" color="primary" variant="bordered">
-                Me contacter
-            </Button>  
-        </Link>
       </>
     ),
     badge: (<><p className="py-2 px-3 border-2 border-gray-600 rounded-full">Entrepreneur & Développeur</p></>),
@@ -66,7 +58,7 @@ const dummyContent = [
     description: (
       <>
         <p className="text-lg">
-          Lorem ipsum dolor, sit amet consectetur adipisicing elit. Aliquam voluptatum enim qui nesciunt vero alias temporibus molestiae odio consectetur, voluptatem cumque omnis rem ipsum et dolore iusto placeat at quis dolorem nobis, reprehenderit est earum ex quos? Minus similique officia assumenda adipisci totam veniam quod! Et nisi rerum eaque illo eligendi accusantium, labore fugit nesciunt ut, facilis quisquam ipsam harum.
+          Vintarget est un écosystème gravitant autour de l'achat revente de vêtements de seconde main. L'objectif est de propulser la carrière de revendeurs des utilisateurs en leur proposant des outils permettant de propulser leur business.
         </p>
       </>
     ),
