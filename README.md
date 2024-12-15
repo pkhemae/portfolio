@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+![Astro Sphere Lighthouse Score](_astrosphere.jpg)
 
-## Getting Started
+Astro Sphere is a static, minimalist, lightweight, lightning fast portfolio and blog theme based on my personal website.
 
-First, run the development server:
+It is primarily Astro, Tailwind and Typescript, with a very small amount of SolidJS for stateful components.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Deploy your own
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+[![Deploy with Vercel](_deploy_vercel.svg)](https://vercel.com/new/clone?repository-url=https://github.com/markhorn-dev/astro-sphere)  [![Deploy with Netlify](_deploy_netlify.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/markhorn-dev/astro-sphere)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📋 Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- ✅ 100/100 Lighthouse performance
+- ✅ Responsive
+- ✅ Accessible
+- ✅ SEO-friendly
+- ✅ Typesafe
+- ✅ Minimal style
+- ✅ Light/Dark Theme
+- ✅ Animated UI
+- ✅ Tailwind styling
+- ✅ Auto generated sitemap
+- ✅ Auto generated RSS Feed
+- ✅ Markdown support
+- ✅ MDX Support (components in your markdown)
+- ✅ Searchable content (posts and projects)
+- ✅ Code Blocks - copy to clipboard
 
-## Learn More
+## 💯 Lighthouse score
+![Astro Sphere Lighthouse Score](_lighthouse.png)
 
-To learn more about Next.js, take a look at the following resources:
+## 🕊️ Lightweight
+All pages under 100kb (including fonts)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## ⚡︎ Fast
+Rendered in ~40ms on localhost
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📄 Configuration
 
-## Deploy on Vercel
+The blog posts on the demo serve as the documentation and configuration.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 💻 Commands
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+All commands are run from the root of the project, from a terminal:
+
+Replace npm with your package manager of choice. `npm`, `pnpm`, `yarn`, `bun`, etc
+
+| Command                   | Action                                           |
+| :------------------------ | :----------------------------------------------- |
+| `npm install`             | Installs dependencies                            |
+| `npm run dev`             | Starts local dev server at `localhost:4321`      |
+| `npm run dev:network`     | Starts dev server on local network               |
+| `npm run sync`            | Generates TypeScript types for all Astro modules.|
+| `npm run build`           | Build your production site to `./dist/`          |
+| `npm run preview`         | Preview your build locally, before deploying     |
+| `npm run preview:network` | Starts preview server on local network           |
+| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
+| `npm run astro -- --help` | Get help using the Astro CLI                     |
+| `npm run lint`            | Run ESLint                                       |
+| `npm run lint:fix`        | Auto-fix ESLint issues                           |
+
+## 🗺️ Roadmap
+
+A few features I plan to implement
+- ⬜ Article Pages - Table of Contents
+- ⬜ Article Pages - Share on social media
+
+## ✨ Acknowledgement
+
+Theme inspired by [Paco Coursey](https://paco.me/), [Lee Robinson](https://leerob.io/) and [Hayden Bleasel](https://www.haydenbleasel.com/)
+
+
+## 🏛️ License
+
+MIT
+
+
+# 1.0.1 Update
+
+Added ability to run dev and preview on local network.
+added npm run dev:network
+added npm run preview:network
+
+Added slightly more particle density in both light and dark mode.
+
+Added subtle dark mode star and meteor animations.
+
+Removed eslint config
+
