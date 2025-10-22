@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
+    text-decoration: none;
+    font-size: medium;
+    color: black;
+    background: #FFF;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 100vh;
+    gap: 20px;
+}
+
+.self,
+.education {
+    max-width: 500px;
+}
+
+.self {
+    margin-top: 10%;
+    margin-bottom: 20px;
+}
+
+.self h1 {
+    font-size: larger;
+    font-weight: 600;
+}
+
+.self ul {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.self ul span {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+a {
+    text-decoration: underline
+}
+
+a:hover {
+    text-decoration: none;
+}
+
+.education h2 {
+    font-size: larger;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.education-row .school {
+    font-weight: 500;
+}
+
+.education-row .role-date {
+    opacity: 0.6;
+}
+
+@media (max-width: 430px) {
+    .self,
+    .education {
+        margin: 20px;
+    }
+}
