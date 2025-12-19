@@ -7,7 +7,7 @@ import { HoverBorderGradient } from "./ui/hover-border-gradient";
 
 export function TracingBeamSection() {
   return (
-    <TracingBeam className="px-6">
+    <TracingBeam className="px-6 pb-20">
       <div className="max-w-2xl mx-auto antialiased pt-4 relative">
         {dummyContent.map((item, index) => (
           <div key={`content-${index}`} className="mb-10">
