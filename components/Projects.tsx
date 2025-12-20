@@ -20,7 +20,7 @@ export function Projects() {
                             </h3>
                             <div className="text-base !m-0 !p-0 font-normal">
                                 <span className="text-slate-500 ">
-                                    Le site de portfolio sur lequel vous vous trouvez actuellement. Réalisé avec NextJS et l'appui de librairies telles qu'Acternity pour le design des composants.
+                                    Le site de portfolio sur lequel vous vous trouvez actuellement. Il me permet de présenter les projets sur lesquels j'ai pu travailler.
                                 </span>
                             </div>
                         </div>
