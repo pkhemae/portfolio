@@ -24,7 +24,7 @@ export default async function Post({ params }: { params: Promise<{ slug: string 
                             href="/"
                             className="md:hidden flex items-center gap-2 text-neutral-500 hover:text-neutral-800 transition-colors mb-6 text-sm"
                         >
-                            <span>←</span> Index
+                            <span>←</span> Accueil
                         </Link>
                         <h1 className="text-3xl lg:text-4xl font-bold mb-3 tracking-tight">{postData.title}</h1>
                         <p className="text-neutral-400 text-sm">{postData.date}</p>
@@ -52,7 +52,7 @@ export default async function Post({ params }: { params: Promise<{ slug: string 
                             href="/"
                             className="flex items-center gap-2 text-neutral-500 hover:text-neutral-800 transition-colors text-sm"
                         >
-                            <span>←</span> Back to home
+                            <span>←</span> Accueil
                         </Link>
                     </div>
                 </div>

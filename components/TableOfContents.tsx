@@ -45,7 +45,7 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
                 href="/"
                 className="flex items-center gap-2 text-neutral-500 hover:text-neutral-800 transition-colors mb-8 text-sm"
             >
-                <span>←</span> Index
+                <span>←</span> Accueil
             </Link>
 
             <ul className="space-y-3 text-sm">

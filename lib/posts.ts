@@ -13,6 +13,7 @@ export interface Post {
     title: string;
     date: string;
     description: string;
+    thumbnail?: string;
     content: string;
     toc: { id: string; title: string; level: number }[];
 }
@@ -34,7 +35,7 @@ export function getSortedPostsData(): Omit<Post, "content" | "toc">[] {
         // Combine the data with the id
         return {
             slug,
-            ...(matterResult.data as { title: string; date: string; description: string }),
+            ...(matterResult.data as { title: string; date: string; description: string; thumbnail?: string }),
         };
     });
 
