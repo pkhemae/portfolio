@@ -11,7 +11,7 @@ export default function Home() {
       </header>
 
       <section className="mb-12 space-y-6 text-base leading-relaxed">
-        <p>Étudiant de 20 ans en première année de BUT Informatique à l'Université de Nantes. Passionné par les sciences et les nouvelles technologies, vous trouverez mes projets sur cette page.</p>
+        <p>Étudiant de 20 ans en première année de BUT Informatique à l&apos;Université de Nantes. Passionné par les sciences et les nouvelles technologies, vous trouverez mes projets sur cette page.</p>
         <p>
           Vous pouvez également découvrir mon travail sur {" "}
           <Link
