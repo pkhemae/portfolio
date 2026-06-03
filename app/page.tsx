@@ -7,7 +7,18 @@ import ProjectsSection from "../components/ProjectsSection";
 export default function Home() {
   const allPostsData = getSortedPostsData();
   return (
-    <main className="max-w-xl mx-auto px-6 py-20 font-sans text-neutral-800">
+    <>
+      <div 
+        className="absolute top-0 left-0 w-full h-[700px] z-[-1] opacity-[0.15] pointer-events-none" 
+        style={{ 
+          backgroundImage: "url('/images/nantes_map.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          WebkitMaskImage: "radial-gradient(ellipse at 50% 30%, black 10%, transparent 70%)",
+          maskImage: "radial-gradient(ellipse at 50% 30%, black 10%, transparent 70%)"
+        }} 
+      />
+      <main className="max-w-xl mx-auto px-6 py-20 font-sans text-neutral-800 relative">
       <header className="mb-12 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-neutral-900 mb-2">Khémara Parc</h1>
@@ -25,7 +36,7 @@ export default function Home() {
       </header>
 
       <section className="mb-12 space-y-6 text-base leading-relaxed">
-        <p>Étudiant de 20 ans en première année de BUT Informatique à l&apos;Université de Nantes. Je suis passionné par les sciences, les mathématiques et les nouvelles technologies.</p>
+        <p>Étudiant de 20 ans en première année de BUT Informatique à l&apos;Université de Nantes. Je suis passionné par les sciences et les nouvelles technologies.</p>
         <p>Sur ce site, vous trouverez mes expérimentations ainsi que les différents projets sur lesquels j&apos;ai travaillé durant mon parcours.</p>
         <p>
           Vous pouvez également découvrir mon travail sur {" "}
@@ -184,5 +195,6 @@ export default function Home() {
         <span>par Khémara Parc.</span>
       </footer>
     </main>
+    </>
   );
 }

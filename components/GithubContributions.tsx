@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { GitHubCalendar } from "react-github-calendar";
+import { ArrowUpRight } from "lucide-react";
 
 export default function GithubContributions() {
   const [daysToShow, setDaysToShow] = useState<number | null>(null);
@@ -37,20 +38,33 @@ export default function GithubContributions() {
   }, []);
 
   return (
-    <div className="w-full flex justify-end" ref={containerRef}>
-      {daysToShow !== null ? (
-        <GitHubCalendar 
-          key={daysToShow} // La clé force le composant à se recharger si le nombre de jours change
-          username="pkhemae" 
-          colorScheme="light" 
-          blockSize={14}
-          blockMargin={4}
-          transformData={(data) => data.slice(-daysToShow)}
-        />
-      ) : (
-        // Placeholder le temps de mesurer la largeur
-        <div className="h-[130px] w-full" />
-      )}
+    <div className="w-full relative group rounded-xl overflow-hidden" ref={containerRef}>
+      <div className="flex justify-end p-2">
+        {daysToShow !== null ? (
+          <GitHubCalendar 
+            key={daysToShow} // La clé force le composant à se recharger si le nombre de jours change
+            username="pkhemae" 
+            colorScheme="light" 
+            blockSize={14}
+            blockMargin={4}
+            transformData={(data) => data.slice(-daysToShow)}
+          />
+        ) : (
+          // Placeholder le temps de mesurer la largeur
+          <div className="h-[130px] w-full" />
+        )}
+      </div>
+
+      <a 
+        href="https://github.com/pkhemae" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 backdrop-blur-[3px] bg-white/40 transition-opacity duration-300 cursor-pointer"
+      >
+        <span className="flex items-center gap-2 px-5 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-medium group-hover/btn:bg-neutral-800 transition-all shadow-lg shadow-neutral-900/20 transform translate-y-2 group-hover:translate-y-0 duration-300">
+          Voir sur GitHub <ArrowUpRight size={18} />
+        </span>
+      </a>
     </div>
   );
 }
