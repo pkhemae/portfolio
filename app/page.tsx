@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSortedPostsData } from "../lib/posts";
 import GithubContributions from "../components/GithubContributions";
+import ProjectsSection from "../components/ProjectsSection";
 
 export default function Home() {
   const allPostsData = getSortedPostsData();
@@ -48,6 +49,8 @@ export default function Home() {
           </a>
         </div>
       </section>
+
+      <ProjectsSection />
 
       <section className="mb-12">
         <h2 className="text-neutral-400 text-sm mb-2 font-medium">Publications</h2>
