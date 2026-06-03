@@ -26,7 +26,7 @@ export default function Home() {
 
       <section className="mb-12 space-y-6 text-base leading-relaxed">
         <p>Étudiant de 20 ans en première année de BUT Informatique à l&apos;Université de Nantes. Je suis passionné par les sciences, les mathématiques et les nouvelles technologies.</p>
-        <p>Sur ce site, vous trouverez mes expérimentations ainsi que les différents projets sur lesquels j'ai travaillé durant mon parcours.</p>
+        <p>Sur ce site, vous trouverez mes expérimentations ainsi que les différents projets sur lesquels j&apos;ai travaillé durant mon parcours.</p>
         <p>
           Vous pouvez également découvrir mon travail sur {" "}
           <Link
@@ -75,6 +75,7 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 {thumbnail && (
                   <div className="relative w-10 h-6 shrink-0 rounded overflow-hidden bg-neutral-100 border border-neutral-200">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={thumbnail}
                       alt={title}
