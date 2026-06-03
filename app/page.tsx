@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getSortedPostsData } from "../lib/posts";
 import GithubContributions from "../components/GithubContributions";
 import ProjectsSection from "../components/ProjectsSection";
@@ -7,13 +8,25 @@ export default function Home() {
   const allPostsData = getSortedPostsData();
   return (
     <main className="max-w-xl mx-auto px-6 py-20 font-sans text-neutral-800">
-      <header className="mb-12">
-        <h1 className="text-lg font-medium mb-1">Khémara Parc</h1>
-        <p className="text-neutral-500 text-sm">Bonjour 👋</p>
+      <header className="mb-12 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-neutral-900 mb-2">Khémara Parc</h1>
+          <p className="text-neutral-500 text-lg sm:text-xl">Bonjour 👋</p>
+        </div>
+        <Image 
+          src="/images/photo_upscaled.png" 
+          alt="Khémara Parc" 
+          width={256} 
+          height={256} 
+          quality={100}
+          priority
+          className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover shadow-sm border border-neutral-200/60 shrink-0 rotate-2 hover:rotate-0 hover:scale-105 hover:shadow-md transition-all duration-300" 
+        />
       </header>
 
       <section className="mb-12 space-y-6 text-base leading-relaxed">
-        <p>Étudiant de 20 ans en première année de BUT Informatique à l&apos;Université de Nantes. Passionné par les sciences et les nouvelles technologies, vous trouverez mes projets sur cette page.</p>
+        <p>Étudiant de 20 ans en première année de BUT Informatique à l&apos;Université de Nantes. Je suis passionné par les sciences, les mathématiques et les nouvelles technologies.</p>
+        <p>Sur ce site, vous trouverez mes expérimentations ainsi que les différents projets sur lesquels j'ai travaillé durant mon parcours.</p>
         <p>
           Vous pouvez également découvrir mon travail sur {" "}
           <Link
@@ -26,7 +39,7 @@ export default function Home() {
         </p>
         <div>
           <a
-            href="#"
+            href="/cv.pdf"
             target="_blank"
             className="inline-flex items-center gap-2 text-neutral-500 hover:text-neutral-800 transition-colors underline decoration-neutral-300 underline-offset-4 hover:decoration-neutral-500"
           >
@@ -49,8 +62,6 @@ export default function Home() {
           </a>
         </div>
       </section>
-
-      <ProjectsSection />
 
       <section className="mb-12">
         <h2 className="text-neutral-400 text-sm mb-2 font-medium">Publications</h2>
@@ -78,6 +89,8 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      <ProjectsSection />
       
       <section className="mb-12">
         <h2 className="text-neutral-400 text-sm mb-4 font-medium">Mes contributions</h2>
@@ -154,6 +167,21 @@ export default function Home() {
           </a>
         </div>
       </section>
-    </main >
+
+      <footer className="mt-20 flex justify-center items-center gap-1.5 text-sm text-neutral-400">
+        <span>Développé avec</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          className="text-red-500"
+        >
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+        </svg>
+        <span>par Khémara Parc.</span>
+      </footer>
+    </main>
   );
 }
