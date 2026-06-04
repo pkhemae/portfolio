@@ -1,26 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink, Code } from "lucide-react";
 
-// Les projets fictifs (configurables)
-const PROJECTS = [
-  {
-    id: "1",
-    title: "Vintarget",
-    shortDescription: "Application CRM pour les revendeurs Vinted.",
-    fullDescription: "Vintarget permet aux utilisateurs de gérer leurs ventes sur Vinted de manière centralisée.",
-    tags: ["React", "Node.js", "PostgreSQL"],
-    rotation: -2,
-    color: "bg-emerald-50",
-    link: "https://vintarget.fr/",
-    github: "#"
-  }
-];
+import { Project } from "../lib/projects";
 
-export default function ProjectsSection() {
-  const [selectedProject, setSelectedProject] = useState<typeof PROJECTS[0] | null>(null);
+interface ProjectsSectionProps {
+  projects: Project[];
+}
+
+export default function ProjectsSection({ projects }: ProjectsSectionProps) {
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const checkScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+      setIsScrolledToBottom(scrollTop + clientHeight >= scrollHeight - 10);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedProject) {
+      // Check initially when modal opens
+      setTimeout(checkScroll, 50);
+    } else {
+      setIsScrolledToBottom(false);
+    }
+  }, [selectedProject]);
 
   return (
     <>
@@ -28,19 +37,17 @@ export default function ProjectsSection() {
         <h2 className="text-neutral-400 text-sm mb-6 font-medium">Projets</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative py-4">
-          {PROJECTS.map((project, index) => (
+          {projects.map((project, index) => (
             <motion.div
               key={project.id}
               layoutId={`card-${project.id}`}
-              whileHover={{ scale: 1.05, rotate: 0, zIndex: 10 }}
-              whileTap={{ scale: 0.95 }}
-              initial={{ rotate: project.rotation }}
-              animate={{ rotate: project.rotation }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0, rotate: project.rotation }}
+              whileHover={{ scale: 1.02, rotate: 0, y: -5 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
               onClick={() => setSelectedProject(project)}
               className={`p-6 rounded-3xl cursor-pointer border border-neutral-200/60 shadow-sm hover:shadow-md transition-shadow ${project.color}`}
               style={{
-                // Décalage pour un effet encore plus organique
                 marginTop: index % 2 !== 0 ? "2rem" : "0",
               }}
             >
@@ -73,38 +80,52 @@ export default function ProjectsSection() {
             <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 z-50 pointer-events-none">
               <motion.div
                 layoutId={`card-${selectedProject.id}`}
-                className="w-full max-w-lg p-8 sm:p-10 rounded-[2rem] border border-neutral-200 shadow-2xl pointer-events-auto bg-white relative"
+                className="w-full max-w-lg rounded-[2rem] border border-neutral-200 shadow-2xl pointer-events-auto bg-white relative max-h-[70vh] flex flex-col overflow-hidden"
               >
                 <button
                   onClick={() => setSelectedProject(null)}
-                  className="absolute top-6 right-6 text-neutral-400 hover:text-neutral-900 transition-colors z-50 p-2"
+                  className="absolute top-6 right-6 text-neutral-400 hover:text-neutral-900 transition-colors z-50 p-2 bg-white/80 rounded-full backdrop-blur-sm"
                   aria-label="Fermer"
                 >
                   <X size={24} />
                 </button>
 
-                <div className="relative z-10 pr-8">
-                  <h3 className="text-2xl font-bold text-neutral-900 mb-3">{selectedProject.title}</h3>
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {selectedProject.tags.map(tag => (
-                      <span key={tag} className="px-2 py-1 bg-neutral-100 rounded-md text-xs text-neutral-600 font-medium">
-                        {tag}
-                      </span>
-                    ))}
+                {/* En-tête collant (sticky) */}
+                <div className="px-8 pt-8 sm:px-10 sm:pt-10 pb-4 border-b border-neutral-100 z-20 bg-white/90 backdrop-blur-md shrink-0">
+                  <div className="pr-8">
+                    <h3 className="text-2xl font-bold text-neutral-900 mb-3">{selectedProject.title}</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedProject.tags.map(tag => (
+                        <span key={tag} className="px-2 py-1 bg-neutral-100 rounded-md text-xs text-neutral-600 font-medium">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
+                </div>
 
-                  <p className="text-neutral-600 text-base leading-relaxed mb-8">
-                    {selectedProject.fullDescription}
-                  </p>
+                {/* Contenu scrollable */}
+                <div 
+                  className="px-8 pb-8 sm:px-10 sm:pb-10 pt-6 overflow-y-auto relative z-10 flex-1"
+                  ref={scrollContainerRef}
+                  onScroll={checkScroll}
+                >
+                  <div 
+                    className="prose prose-sm prose-neutral text-neutral-600 mb-6 max-w-none prose-img:rounded-xl prose-img:shadow-sm"
+                    dangerouslySetInnerHTML={{ __html: selectedProject.contentHtml }}
+                  />
 
                   <div className="flex flex-wrap gap-4">
                     {selectedProject.link && selectedProject.link !== "#" && (
                       <a
                         href={selectedProject.link}
                         target="_blank"
-                        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-neutral-800 to-neutral-950 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow-md hover:from-neutral-700 hover:to-neutral-900 hover:-translate-y-0.5 transition-all duration-300"
+                        className="group relative overflow-hidden flex items-center gap-2 px-5 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
                       >
-                        Voir le projet <ExternalLink size={16} />
+                        <span className="absolute inset-0 w-full h-full bg-neutral-700 [clip-path:circle(0%_at_0%_50%)] group-hover:[clip-path:circle(150%_at_0%_50%)] transition-all duration-700 ease-out" />
+                        <span className="relative z-10 flex items-center gap-2">
+                          Voir le projet <ExternalLink size={16} />
+                        </span>
                       </a>
                     )}
                     {selectedProject.github && selectedProject.github !== "#" && (
@@ -118,6 +139,9 @@ export default function ProjectsSection() {
                     )}
                   </div>
                 </div>
+
+                {/* Dégradé en bas pour indiquer le scroll */}
+                <div className={`absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent pointer-events-none z-20 rounded-b-[2rem] transition-opacity duration-300 ${isScrolledToBottom ? 'opacity-0' : 'opacity-100'}`} />
               </motion.div>
             </div>
           </>

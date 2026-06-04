@@ -1,11 +1,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getSortedPostsData } from "../lib/posts";
+import { getProjectsData } from "../lib/projects";
 import GithubContributions from "../components/GithubContributions";
 import ProjectsSection from "../components/ProjectsSection";
+import { FadeIn, FadeInStagger } from "../components/FadeIn";
 
-export default function Home() {
+export default async function Home() {
   const allPostsData = getSortedPostsData();
+  const projectsData = await getProjectsData();
+  
   return (
     <>
       <div 
@@ -19,6 +23,8 @@ export default function Home() {
         }} 
       />
       <main className="max-w-xl mx-auto px-6 py-20 font-sans text-neutral-800 relative">
+      <FadeInStagger>
+      <FadeIn>
       <header className="mb-12 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-neutral-900 mb-2">Khémara Parc</h1>
@@ -34,7 +40,9 @@ export default function Home() {
           className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover shadow-sm border border-neutral-200/60 shrink-0 rotate-2 hover:rotate-0 hover:scale-105 hover:shadow-md transition-all duration-300" 
         />
       </header>
+      </FadeIn>
 
+      <FadeIn>
       <section className="mb-12 space-y-6 text-base leading-relaxed">
         <p>Étudiant de 20 ans en première année de BUT Informatique à l&apos;Université de Nantes. Je suis passionné par les sciences et les nouvelles technologies.</p>
         <p>Sur ce site, vous trouverez mes expérimentations ainsi que les différents projets sur lesquels j&apos;ai travaillé durant mon parcours.</p>
@@ -73,7 +81,9 @@ export default function Home() {
           </a>
         </div>
       </section>
+      </FadeIn>
 
+      <FadeIn>
       <section className="mb-12">
         <h2 className="text-neutral-400 text-sm mb-2 font-medium">Publications</h2>
         <div className="space-y">
@@ -101,14 +111,20 @@ export default function Home() {
           ))}
         </div>
       </section>
+      </FadeIn>
 
-      <ProjectsSection />
+      <FadeIn>
+      <ProjectsSection projects={projectsData} />
+      </FadeIn>
       
+      <FadeIn>
       <section className="mb-12">
         <h2 className="text-neutral-400 text-sm mb-4 font-medium">Mes contributions</h2>
         <GithubContributions />
       </section>
+      </FadeIn>
 
+      <FadeIn>
       <section>
         <h2 className="text-neutral-400 text-sm mb-2 font-medium">Liens externes</h2>
         <div className="flex flex-wrap gap-4">
@@ -179,7 +195,9 @@ export default function Home() {
           </a>
         </div>
       </section>
+      </FadeIn>
 
+      <FadeIn>
       <footer className="mt-20 flex justify-center items-center gap-1.5 text-sm text-neutral-400">
         <span>Développé avec</span>
         <svg
@@ -194,6 +212,8 @@ export default function Home() {
         </svg>
         <span>par Khémara Parc.</span>
       </footer>
+      </FadeIn>
+      </FadeInStagger>
     </main>
     </>
   );
