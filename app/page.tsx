@@ -4,6 +4,7 @@ import { getSortedPostsData } from "../lib/posts";
 import { getProjectsData } from "../lib/projects";
 import GithubContributions from "../components/GithubContributions";
 import ProjectsSection from "../components/ProjectsSection";
+import EducationCards from "../components/EducationCards";
 import { FadeIn, FadeInStagger } from "../components/FadeIn";
 
 export default async function Home() {
@@ -80,6 +81,13 @@ export default async function Home() {
             Télécharger mon CV
           </a>
         </div>
+      </section>
+      </FadeIn>
+
+      <FadeIn>
+      <section className="mb-14">
+        <h2 className="text-neutral-400 text-sm mb-4 font-medium">Formations</h2>
+        <EducationCards />
       </section>
       </FadeIn>
 
