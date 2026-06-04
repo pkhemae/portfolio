@@ -33,7 +33,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
 
   return (
     <>
-      <section className="mb-16">
+      <section className="mb-16" id="projets">
         <h2 className="text-neutral-400 text-sm mb-6 font-medium">Projets</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative py-4">
@@ -74,10 +74,10 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedProject(null)}
-              className="fixed inset-0 bg-neutral-900/30 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-neutral-900/30 backdrop-blur-sm z-[60]"
             />
 
-            <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 z-50 pointer-events-none">
+            <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 z-[70] pointer-events-none">
               <motion.div
                 layoutId={`card-${selectedProject.id}`}
                 className="w-full max-w-lg rounded-[2rem] border border-neutral-200 shadow-2xl pointer-events-auto bg-white relative max-h-[70vh] flex flex-col overflow-hidden"

@@ -12,7 +12,7 @@ export default async function Post({ params }: { params: Promise<{ slug: string 
     const postData = await getPostData(slug);
 
     return (
-        <main className="max-w-5xl mx-auto px-6 py-20 font-sans text-neutral-800">
+        <main className="max-w-5xl mx-auto px-6 pt-32 pb-20 font-sans text-neutral-800">
             <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8 lg:gap-16">
                 <aside className="hidden md:block">
                     <TableOfContents toc={postData.toc} />

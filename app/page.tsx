@@ -22,10 +22,10 @@ export default async function Home() {
           maskImage: "radial-gradient(ellipse at 50% 30%, black 10%, transparent 70%)"
         }} 
       />
-      <main className="max-w-xl mx-auto px-6 py-20 font-sans text-neutral-800 relative">
+      <main className="max-w-xl mx-auto px-6 pt-32 pb-20 font-sans text-neutral-800 relative">
       <FadeInStagger>
       <FadeIn>
-      <header className="mb-12 flex items-center justify-between gap-4">
+      <header className="mb-12 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-6 sm:gap-4">
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-neutral-900 mb-2">Khémara Parc</h1>
           <p className="text-neutral-500 text-lg sm:text-xl">Bonjour 👋</p>
