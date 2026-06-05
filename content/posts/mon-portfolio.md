@@ -7,6 +7,8 @@ thumbnail: "/portfolio-preview.png"
 
 ![Aperçu du portfolio](/portfolio-preview.png)
 
+Voir le projet sur [GitHub](https://github.com/pkhemae/portfolio).
+
 ## Pourquoi ce projet ?
 
 J'ai décidé de créer ce portfolio pour avoir une vitrine en ligne de mon travail. Je voulais un site qui soit à la fois rapide, propre visuellement, et qui me permette de mettre en avant mes projets ainsi que mes compétences. 
