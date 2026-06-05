@@ -14,6 +14,7 @@ export interface Project {
     tags: string[];
     rotation: number;
     color: string;
+    icon?: string;
     link: string;
     github: string;
     contentHtml: string;
@@ -49,6 +50,7 @@ export async function getProjectsData(): Promise<Project[]> {
                     tags: string[]; 
                     rotation: number; 
                     color: string; 
+                    icon?: string;
                     link: string; 
                     github: string; 
                 }),

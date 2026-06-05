@@ -4,6 +4,7 @@ shortDescription: "Application CRM pour les revendeurs Vinted."
 tags: ["NextJS", "Springboot", "PostgreSQL", "Redis"]
 rotation: -2
 color: "bg-emerald-50"
+icon: "Target"
 link: "https://vintarget.fr/"
 github: "#"
 ---

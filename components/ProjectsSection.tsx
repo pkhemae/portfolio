@@ -2,9 +2,22 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ExternalLink, Code } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 
 import { Project } from "../lib/projects";
+
+const getLucideIcon = (iconName: string) => {
+  if (LucideIcons[iconName as keyof typeof LucideIcons]) {
+    return LucideIcons[iconName as keyof typeof LucideIcons];
+  }
+  
+  const pascalCaseName = iconName
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join('');
+    
+  return LucideIcons[pascalCaseName as keyof typeof LucideIcons] || LucideIcons.Folder;
+};
 
 interface ProjectsSectionProps {
   projects: Project[];
@@ -37,31 +50,43 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
         <h2 className="text-neutral-400 text-sm mb-6 font-medium">Projets</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative py-4">
-          {projects.map((project, index) => (
-            <motion.div
-              key={project.id}
-              layoutId={`card-${project.id}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0, rotate: project.rotation }}
-              whileHover={{ scale: 1.02, rotate: 0, y: -5 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              onClick={() => setSelectedProject(project)}
-              className={`p-6 rounded-3xl cursor-pointer border border-neutral-200/60 shadow-sm hover:shadow-md transition-shadow ${project.color}`}
-              style={{
-                marginTop: index % 2 !== 0 ? "2rem" : "0",
-              }}
-            >
-              <h3 className="text-lg font-semibold text-neutral-800 mb-2">{project.title}</h3>
-              <p className="text-neutral-600 text-sm leading-relaxed mb-4">{project.shortDescription}</p>
-              <div className="flex flex-wrap gap-2">
-                {project.tags.map(tag => (
-                  <span key={tag} className="px-2 py-1 bg-white/60 border border-neutral-200/50 rounded-md text-xs text-neutral-600 font-medium">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </motion.div>
-          ))}
+          {projects.map((project, index) => {
+            const ProjectIcon = project.icon ? getLucideIcon(project.icon) as React.ElementType : null;
+            
+            return (
+              <motion.div
+                key={project.id}
+                layoutId={`card-${project.id}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0, rotate: project.rotation }}
+                whileHover={{ scale: 1.02, rotate: 0, y: -5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                onClick={() => setSelectedProject(project)}
+                className={`p-6 rounded-3xl cursor-pointer border border-neutral-200/60 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group/card ${project.color}`}
+                style={{
+                  marginTop: index % 2 !== 0 ? "2rem" : "0",
+                }}
+              >
+                {ProjectIcon && (
+                  <div className="absolute -bottom-6 -right-6 text-neutral-900/[0.03] group-hover/card:text-neutral-900/[0.06] group-hover/card:scale-110 group-hover/card:-rotate-12 transition-all duration-500 pointer-events-none">
+                    <ProjectIcon size={160} strokeWidth={1} />
+                  </div>
+                )}
+                
+                <div className="relative z-10">
+                  <h3 className="text-lg font-semibold text-neutral-800 mb-2">{project.title}</h3>
+                  <p className="text-neutral-600 text-sm leading-relaxed mb-4">{project.shortDescription}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {project.tags.map(tag => (
+                      <span key={tag} className="px-2 py-1 bg-white/60 border border-neutral-200/50 rounded-md text-xs text-neutral-600 font-medium">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </section>
 
@@ -87,7 +112,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                   className="absolute top-6 right-6 text-neutral-400 hover:text-neutral-900 transition-colors z-50 p-2 bg-white/80 rounded-full backdrop-blur-sm"
                   aria-label="Fermer"
                 >
-                  <X size={24} />
+                  <LucideIcons.X size={24} />
                 </button>
 
                 {/* En-tête collant (sticky) */}
@@ -111,7 +136,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                   onScroll={checkScroll}
                 >
                   <div 
-                    className="prose prose-sm prose-neutral text-neutral-600 mb-6 max-w-none prose-img:rounded-xl prose-img:shadow-sm"
+                    className="prose prose-sm prose-neutral text-neutral-600 mb-6 max-w-none prose-img:rounded-xl prose-img:shadow-sm prose-img:mx-auto prose-img:max-h-[500px] prose-img:w-auto"
                     dangerouslySetInnerHTML={{ __html: selectedProject.contentHtml }}
                   />
 
@@ -124,7 +149,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                       >
                         <span className="absolute inset-0 w-full h-full bg-neutral-700 [clip-path:circle(0%_at_0%_50%)] group-hover:[clip-path:circle(150%_at_0%_50%)] transition-all duration-700 ease-out" />
                         <span className="relative z-10 flex items-center gap-2">
-                          Voir le projet <ExternalLink size={16} />
+                          Voir le projet <LucideIcons.ExternalLink size={16} />
                         </span>
                       </a>
                     )}
@@ -134,7 +159,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                         target="_blank"
                         className="flex items-center gap-2 px-5 py-2.5 bg-white border border-neutral-200 text-neutral-700 rounded-xl text-sm font-medium hover:bg-neutral-50 hover:border-neutral-300 hover:-translate-y-0.5 transition-all duration-300"
                       >
-                        Code source <Code size={16} />
+                        Code source <LucideIcons.Code size={16} />
                       </a>
                     )}
                   </div>
