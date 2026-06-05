@@ -25,13 +25,14 @@ interface ProjectsSectionProps {
 
 export default function ProjectsSection({ projects }: ProjectsSectionProps) {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const gradientRef = useRef<HTMLDivElement>(null);
 
   const checkScroll = () => {
-    if (scrollContainerRef.current) {
+    if (scrollContainerRef.current && gradientRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-      setIsScrolledToBottom(scrollTop + clientHeight >= scrollHeight - 10);
+      const isBottom = scrollTop + clientHeight >= scrollHeight - 10;
+      gradientRef.current.style.opacity = isBottom ? "0" : "1";
     }
   };
 
@@ -39,9 +40,14 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
     if (selectedProject) {
       // Check initially when modal opens
       setTimeout(checkScroll, 50);
+      document.body.style.overflow = "hidden";
     } else {
-      setIsScrolledToBottom(false);
+      document.body.style.overflow = "unset";
     }
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [selectedProject]);
 
   return (
@@ -166,7 +172,10 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                 </div>
 
                 {/* Dégradé en bas pour indiquer le scroll */}
-                <div className={`absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent pointer-events-none z-20 rounded-b-[2rem] transition-opacity duration-300 ${isScrolledToBottom ? 'opacity-0' : 'opacity-100'}`} />
+                <div 
+                  ref={gradientRef}
+                  className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent pointer-events-none z-20 rounded-b-[2rem] transition-opacity duration-300" 
+                />
               </motion.div>
             </div>
           </>
