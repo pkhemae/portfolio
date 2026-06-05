@@ -6,6 +6,7 @@ import GithubContributions from "../components/GithubContributions";
 import ProjectsSection from "../components/ProjectsSection";
 import EducationCards from "../components/EducationCards";
 import { FadeIn, FadeInStagger } from "../components/FadeIn";
+import CvModal from "../components/CvModal";
 
 export default async function Home() {
   const allPostsData = getSortedPostsData();
@@ -58,28 +59,7 @@ export default async function Home() {
           .
         </p>
         <div>
-          <a
-            href="/cv.pdf"
-            target="_blank"
-            className="inline-flex items-center gap-2 text-neutral-500 hover:text-neutral-800 transition-colors underline decoration-neutral-300 underline-offset-4 hover:decoration-neutral-500"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" x2="12" y1="15" y2="3" />
-            </svg>
-            Télécharger mon CV
-          </a>
+          <CvModal />
         </div>
       </section>
       </FadeIn>
