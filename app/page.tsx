@@ -21,16 +21,7 @@ export default function Home() {
           <section className="mb-12 space-y-6 text-base leading-relaxed">
             <p>Étudiant de 20 ans en première année de BUT Informatique à l&apos;Université de Nantes. Je suis passionné par les sciences et les nouvelles technologies.</p>
             <p>Sur ce site, vous trouverez mes expérimentations ainsi que les différents projets sur lesquels j&apos;ai travaillé durant mon parcours.</p>
-            <p>
-              Vous pouvez également découvrir mon travail sur {" "}
-              <Link
-                href="https://github.com/pkhemae"
-                className="underline decoration-neutral-400 underline-offset-4 hover:decoration-neutral-800 transition-colors"
-              >
-                Github
-              </Link>
-              .
-            </p>
+
             <div>
               <CvModal />
             </div>

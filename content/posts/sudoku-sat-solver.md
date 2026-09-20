@@ -5,4 +5,4 @@ description: "Projet académique : modélisation et résolution de grilles de Su
 thumbnail: "/images/sudoku.jpeg"
 ---
 
-wip
+à documenter
