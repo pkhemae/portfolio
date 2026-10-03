@@ -2,29 +2,40 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, FileText } from "lucide-react";
+
 import Image from "next/image";
 
 export default function CvModal() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleKeyDown);
     } else {
       document.body.style.overflow = "unset";
     }
-    return () => { document.body.style.overflow = "unset"; };
+
+    return () => {
+      document.body.style.overflow = "unset";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isOpen]);
 
   return (
     <>
       <button
+        type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 text-neutral-500 hover:text-neutral-800 transition-colors underline decoration-neutral-300 underline-offset-4 hover:decoration-neutral-500"
+        className="bracket-btn text-sm text-neutral-500 hover:bg-[#1D2DFF] hover:text-white px-1.5 py-0.5 rounded transition-colors duration-150 cursor-pointer"
       >
-        <FileText size={14} />
-        Aperçu de mon CV
+        [Aperçu de mon CV]
       </button>
 
       <AnimatePresence>
@@ -42,33 +53,34 @@ export default function CvModal() {
             {/* Modal */}
             <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 z-[90] pointer-events-none">
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                initial={{ opacity: 0, scale: 0.96, y: 12 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className="w-full max-w-[calc(80vh*0.7071)] max-h-[90vh] rounded-[2rem] border border-neutral-200 shadow-2xl pointer-events-auto bg-white relative flex flex-col overflow-hidden"
+                exit={{ opacity: 0, scale: 0.96, y: 12 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="w-full max-w-[calc(80vh*0.7071)] max-h-[90vh] rounded-none border border-neutral-300 shadow-2xl pointer-events-auto bg-white relative flex flex-col overflow-hidden font-mono"
               >
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100 bg-white/90 backdrop-blur-md z-20 shrink-0">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-xl font-bold text-neutral-900">Khémara Parc</h3>
+                {/* Header (Topbar) */}
+                <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-200 bg-white/95 backdrop-blur-md z-20 shrink-0 font-mono text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 text-neutral-800">
+                    <span className="text-[#1D2DFF] font-medium">[cv.pdf]</span>
                   </div>
-                  
-                  <div className="flex items-center gap-4">
+
+                  <div className="flex items-center gap-2">
                     <button
+                      type="button"
                       onClick={() => setIsOpen(false)}
-                      className="text-neutral-400 hover:text-neutral-900 transition-colors p-2"
+                      className="bracket-btn text-xs text-neutral-500 hover:bg-[#1D2DFF] hover:text-white px-1.5 py-0.5 transition-colors cursor-pointer"
                       aria-label="Fermer"
                     >
-                      <X size={20} />
+                      [Fermer ✕]
                     </button>
                   </div>
                 </div>
-                
+
                 {/* PDF Preview */}
-                <div className="w-full bg-white relative rounded-b-[2rem] overflow-y-auto">
-                  <Image 
-                    src="/cv.pdf.png" 
+                <div className="w-full bg-white relative rounded-none overflow-y-auto">
+                  <Image
+                    src="/cv.pdf.png"
                     alt="Aperçu du CV de Khémara Parc"
                     width={2000}
                     height={2828}
@@ -77,20 +89,15 @@ export default function CvModal() {
                 </div>
 
                 {/* Floating Download Button */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
-                  <div className="p-1 bg-white/30 backdrop-blur-md rounded-2xl shadow-xl border border-white/40 flex items-center justify-center">
-                    <a
-                      href="/cv.pdf"
-                      target="_blank"
-                      download
-                      className="group relative overflow-hidden flex items-center gap-2 px-6 py-3 bg-neutral-900 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
-                    >
-                      <span className="absolute inset-0 w-full h-full bg-neutral-700 [clip-path:circle(0%_at_0%_50%)] group-hover:[clip-path:circle(150%_at_0%_50%)] transition-all duration-700 ease-out" />
-                      <span className="relative z-10 flex items-center gap-2">
-                        Télécharger <Download size={16} />
-                      </span>
-                    </a>
-                  </div>
+                <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+                  <a
+                    href="/cv.pdf"
+                    target="_blank"
+                    download
+                    className="inline-flex items-center bg-neutral-900 text-white hover:bg-[#1D2DFF] border border-neutral-800 px-4 py-2 text-xs sm:text-sm font-mono shadow-xl transition-colors duration-150 cursor-pointer"
+                  >
+                    <span>[ Télécharger le CV ]</span>
+                  </a>
                 </div>
               </motion.div>
             </div>

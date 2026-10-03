@@ -4,6 +4,16 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --graph-accent: #1D2DFF;
+  --graph-accent-2: #0856c0;
+  --graph-accent-3: #0066ac;
+  --graph-frame: #d4d4d4;
+  --graph-muted: #868686;
+  --graph-faint: #e5e5e5;
+  --contrast-14: #d7d7d7;
+  --contrast-23: #b1b1b1;
+  --contrast-45: #5d5d5d;
+  --contrast-70: #292929;
 }
 
 @theme inline {
@@ -11,13 +21,23 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-graph-accent: var(--graph-accent);
+  --color-graph-accent-2: var(--graph-accent-2);
+  --color-graph-accent-3: var(--graph-accent-3);
+  --color-graph-frame: var(--graph-frame);
+  --color-graph-muted: var(--graph-muted);
+  --color-graph-faint: var(--graph-faint);
+  --color-contrast-14: var(--contrast-14);
+  --color-contrast-23: var(--contrast-23);
+  --color-contrast-45: var(--contrast-45);
+  --color-contrast-70: var(--contrast-70);
 }
 
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-mono), monospace;
 }
 
 html {
@@ -60,3 +80,61 @@ html {
     0% calc(50% - 10px)
   );
 }
+
+/* Bracket Button with #1D2DFF highlight */
+.bracket-btn {
+  color: #737373;
+  padding: 1px 4px;
+  border-radius: 2px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  user-select: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.bracket-btn:hover {
+  background-color: #1D2DFF;
+  color: #ffffff;
+}
+
+/* mdxcn Graph Frame & Rules */
+.graph-frame {
+  background-image: 
+    repeating-linear-gradient(to right, var(--graph-frame) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(to bottom, var(--graph-frame) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(to right, var(--graph-frame) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(to bottom, var(--graph-frame) 0 2px, transparent 2px 7px);
+  background-position: 0 0, 100% 0, 0 100%, 0 0;
+  background-repeat: repeat-x, repeat-y, repeat-x, repeat-y;
+  background-size: 100% 1px, 1px 100%, 100% 1px, 1px 100%;
+}
+
+.graph-rule {
+  background-image: repeating-linear-gradient(to right, var(--graph-frame) 0 2px, transparent 2px 7px);
+  height: 1px;
+}
+
+.graph-rule-y {
+  background-image: repeating-linear-gradient(to bottom, var(--graph-frame) 0 2px, transparent 2px 7px);
+  width: 1px;
+}
+
+.scrollbar-graph {
+  scrollbar-width: thin;
+  scrollbar-color: var(--graph-frame) transparent;
+}
+
+.scrollbar-graph::-webkit-scrollbar {
+  height: 4px;
+}
+
+.scrollbar-graph::-webkit-scrollbar-thumb {
+  background-color: var(--graph-frame);
+  border-radius: 0;
+}
+
+
+
+

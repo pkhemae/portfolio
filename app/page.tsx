@@ -3,12 +3,13 @@ import { getSortedPostsData } from "../lib/posts";
 import GithubContributions from "../components/GithubContributions";
 import { FadeIn, FadeInStagger } from "../components/FadeIn";
 import CvModal from "../components/CvModal";
+import CopyEmailButton from "../components/CopyEmailButton";
 
 export default function Home() {
   const allPostsData = getSortedPostsData();
 
   return (
-    <main className="max-w-xl mx-auto px-6 pt-32 pb-20 font-sans text-neutral-800 relative">
+    <main className="max-w-xl mx-auto px-6 pt-32 pb-20 font-mono text-neutral-800 relative">
       <FadeInStagger>
         <FadeIn>
           <header className="mb-12">
@@ -19,11 +20,32 @@ export default function Home() {
 
         <FadeIn>
           <section className="mb-12 space-y-6 text-base leading-relaxed">
-            <p>Étudiant de 20 ans en première année de BUT Informatique à l&apos;Université de Nantes. Je suis passionné par les sciences et les nouvelles technologies.</p>
+            <p>Étudiant de 20 ans en deuxième année de BUT Informatique à l&apos;Université de Nantes. Je suis passionné par les sciences et les nouvelles technologies.</p>
             <p>Sur ce site, vous trouverez mes expérimentations ainsi que les différents projets sur lesquels j&apos;ai travaillé durant mon parcours.</p>
 
-            <div>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-2 pt-2">
               <CvModal />
+              <CopyEmailButton />
+              <a
+                href="https://github.com/pkhemae"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="GitHub"
+                aria-label="Profil GitHub"
+                className="bracket-btn text-sm text-neutral-500 hover:bg-[#1D2DFF] hover:text-white px-1.5 py-0.5 rounded transition-colors duration-150"
+              >
+                [GitHub]
+              </a>
+              <a
+                href="https://linkedin.com/in/khemaraparc"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="LinkedIn"
+                aria-label="Profil LinkedIn"
+                className="bracket-btn text-sm text-neutral-500 hover:bg-[#1D2DFF] hover:text-white px-1.5 py-0.5 rounded transition-colors duration-150"
+              >
+                [LinkedIn]
+              </a>
             </div>
           </section>
         </FadeIn>
@@ -65,78 +87,6 @@ export default function Home() {
           </section>
         </FadeIn>
 
-        <FadeIn>
-          <section>
-            <h2 className="text-neutral-400 text-sm mb-2 font-medium">Liens externes</h2>
-            <div className="flex flex-wrap gap-4">
-              <a
-                href="https://github.com/pkhemae"
-                target="_blank"
-                className="flex items-center gap-2 text-neutral-500 hover:text-neutral-800 transition-colors w-fit group"
-              >
-                <span>Github</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform"
-                >
-                  <line x1="7" y1="17" x2="17" y2="7" />
-                  <polyline points="7 7 17 7 17 17" />
-                </svg>
-              </a>
-              <a
-                href="https://linkedin.com/in/khemaraparc"
-                target="_blank"
-                className="flex items-center gap-2 text-neutral-500 hover:text-neutral-800 transition-colors w-fit group"
-              >
-                <span>LinkedIn</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform"
-                >
-                  <line x1="7" y1="17" x2="17" y2="7" />
-                  <polyline points="7 7 17 7 17 17" />
-                </svg>
-              </a>
-              <a
-                href="mailto:khemara.parc@etu.univ-nantes.fr"
-                className="flex items-center gap-2 text-neutral-500 hover:text-neutral-800 transition-colors w-fit group"
-              >
-                <span>Email</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform"
-                >
-                  <line x1="7" y1="17" x2="17" y2="7" />
-                  <polyline points="7 7 17 7 17 17" />
-                </svg>
-              </a>
-            </div>
-          </section>
-        </FadeIn>
 
         <FadeIn>
           <footer className="mt-20 flex justify-center items-center gap-1.5 text-sm text-neutral-400">
