@@ -1,48 +1,55 @@
 # portfolio
 
-Code source de mon portfolio personnel, développé avec Next.js et Tailwind CSS.
+Source code of my personal portfolio, built with Next.js and Tailwind CSS.
 
-![Aperçu du portfolio](/public/portfolio-preview.png)
+![Portfolio Preview](/public/portfolio-preview.png)
 
-## 🚀 Fonctionnalités
+## 🚀 Features
 
-- **Performances** : Créé avec le App Router de Next.js. Les pages des projets sont générées statiquement (SSG) pour un chargement rapide.
-- **Animations** : Utilisation de la librairie Framer Motion pour les transitions de page et les modales.
-- **Contenu Markdown** : Les projets et les articles sont écrits en fichiers Markdown, parsés avec `gray-matter` et `remark`.
-- **Prévisualisation CV** : Le CV s'affiche directement sur le site dans une fenêtre modale avec un bouton de téléchargement.
+- **Performance**: Built with Next.js App Router. Project and article pages are statically generated (SSG) for fast loading times.
+- **Minimalist Design & Clean Typography**: Styled with Tailwind CSS and Inter for clean readability, accented with subtle interactions.
+- **Interactive CV Modal**: Preview resume directly on the site with an embedded viewer and direct download option.
+- **GitHub Contribution Graph**: Dynamic commit activity visualizer powered by `mdxcn`.
+- **Skills & Tech Stack**: Highlighted languages and tools with colored vector icons.
+- **Smooth Animations**: Page transitions and modal dialogs powered by Framer Motion.
+- **Markdown Content**: Articles and project write-ups written in Markdown, parsed with `gray-matter` and `remark`.
 
-## 🛠️ Stack Technique
+## 🛠️ Tech Stack
 
-- **Framework** : [Next.js](https://nextjs.org/) (React)
-- **Style** : [Tailwind CSS](https://tailwindcss.com/)
-- **Animations** : [Framer Motion](https://www.framer.com/motion/)
-- **Icônes** : [Lucide React](https://lucide.dev/)
-- **Langage** : [TypeScript](https://www.typescriptlang.org/)
+- **Framework**: [Next.js](https://nextjs.org/) (React 19)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Typography**: [Inter](https://fonts.google.com/specimen/Inter)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
 
-## 🏗️ Structure du projet
+## 🏗️ Project Structure
 
-- `/app` : Les pages principales du site.
-- `/components` : Les composants React (Navbar, modales, etc).
-- `/content` : Les dossiers `/posts` et `/projects` avec les fichiers `.md`.
-- `/lib` : Les scripts pour lire et récupérer le contenu des fichiers Markdown.
-- `/public` : Les images et fichiers statiques (comme le CV en PDF).
+- `/app`: Application routes, layout, and global styling.
+- `/components`: Reusable UI components (CV modal, GitHub activity graph, email copy button, animations).
+- `/content`: Markdown files for posts and projects.
+- `/lib`: Helper utilities to parse and load Markdown content.
+- `/public`: Static assets including icons, images, and resume files.
 
-## 💻 Lancer le projet
+## 💻 Getting Started
 
-1. Cloner le projet :
+1. Clone the repository:
 ```bash
 git clone https://github.com/pkhemae/portfolio.git
 cd portfolio
 ```
 
-2. Installer les dépendances :
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-3. Lancer le serveur :
+3. Start the development server:
 ```bash
 npm run dev
 ```
 
-4. Ouvrir [http://localhost:3000](http://localhost:3000) dans le navigateur.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 📄 License
+
+MIT © [Khémara Parc](https://github.com/pkhemae)

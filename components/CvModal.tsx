@@ -57,10 +57,10 @@ export default function CvModal() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.96, y: 12 }}
                 transition={{ duration: 0.18, ease: "easeOut" }}
-                className="w-full max-w-[calc(80vh*0.7071)] max-h-[90vh] rounded-none border border-neutral-300 shadow-2xl pointer-events-auto bg-white relative flex flex-col overflow-hidden font-mono"
+                className="w-full max-w-[calc(80vh*0.7071)] max-h-[90vh] rounded-none border border-neutral-300 shadow-2xl pointer-events-auto bg-white relative flex flex-col overflow-hidden"
               >
                 {/* Header (Topbar) */}
-                <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-200 bg-white/95 backdrop-blur-md z-20 shrink-0 font-mono text-xs sm:text-sm">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-200 bg-white/95 backdrop-blur-md z-20 shrink-0 text-xs sm:text-sm">
                   <div className="flex items-center gap-2 text-neutral-800">
                     <span className="text-[#1D2DFF] font-medium">[cv.pdf]</span>
                   </div>
@@ -94,7 +94,7 @@ export default function CvModal() {
                     href="/cv.pdf"
                     target="_blank"
                     download
-                    className="inline-flex items-center bg-neutral-900 text-white hover:bg-[#1D2DFF] border border-neutral-800 px-4 py-2 text-xs sm:text-sm font-mono shadow-xl transition-colors duration-150 cursor-pointer"
+                    className="inline-flex items-center bg-neutral-900 text-white hover:bg-[#1D2DFF] border border-neutral-800 px-4 py-2 text-xs sm:text-sm shadow-xl transition-colors duration-150 cursor-pointer"
                   >
                     <span>[ Télécharger le CV ]</span>
                   </a>

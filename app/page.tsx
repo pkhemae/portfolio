@@ -9,7 +9,7 @@ export default function Home() {
   const allPostsData = getSortedPostsData();
 
   return (
-    <main className="max-w-xl mx-auto px-6 pt-32 pb-20 font-mono text-neutral-800 relative">
+    <main className="max-w-xl mx-auto px-6 pt-32 pb-20 font-sans text-neutral-800 relative">
       <FadeInStagger>
         <FadeIn>
           <header className="mb-12">
@@ -20,7 +20,26 @@ export default function Home() {
 
         <FadeIn>
           <section className="mb-12 space-y-6 text-base leading-relaxed">
-            <p>Étudiant de 20 ans en deuxième année de BUT Informatique à l&apos;Université de Nantes. Je suis passionné par les sciences et les nouvelles technologies.</p>
+            <p>
+              Étudiant de 20 ans en deuxième année de BUT Informatique à{" "}
+              <a
+                href="https://www.univ-nantes.fr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline font-medium text-[#1D2DFF] group transition-colors whitespace-nowrap"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/icons/univ-nantes.png"
+                  alt="Université de Nantes"
+                  className="w-4 h-4 object-contain inline-block mr-1.5 align-[-2px]"
+                />
+                <span className="underline underline-offset-4 decoration-[#1D2DFF]/40 group-hover:decoration-[#1D2DFF] transition-colors">
+                  l&apos;Université de Nantes
+                </span>
+              </a>
+              . Je suis passionné par les sciences et les nouvelles technologies.
+            </p>
             <p>Sur ce site, vous trouverez mes expérimentations ainsi que les différents projets sur lesquels j&apos;ai travaillé durant mon parcours.</p>
 
             <div className="flex flex-wrap items-center gap-x-2 gap-y-2 pt-2">
@@ -52,7 +71,7 @@ export default function Home() {
 
         <FadeIn>
           <section className="mb-12">
-            <h2 className="text-neutral-400 text-sm mb-2 font-medium">Projets académiques & publications</h2>
+            <h2 className="text-neutral-400 text-sm mb-2 font-medium">Mes projets</h2>
             <div className="space-y">
               {allPostsData.map(({ slug, date, title, thumbnail }) => (
                 <Link
@@ -99,6 +118,7 @@ export default function Home() {
                     { name: "CSS", icon: "/icons/css.svg" },
                     { name: "JavaScript", icon: "/icons/javascript.svg" },
                     { name: "Kotlin", icon: "/icons/kotlin.svg" },
+                    { name: "Python", icon: "/icons/python.svg" },
                     { name: "SQL", icon: "/icons/sql.svg" },
                   ].map((skill) => (
                     <div
