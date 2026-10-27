@@ -9,7 +9,7 @@ export default function Home() {
   const allPostsData = getSortedPostsData();
 
   return (
-    <main className="max-w-xl mx-auto px-6 pt-32 pb-20 font-sans text-neutral-800 relative">
+    <main className="max-w-2xl mx-auto px-6 pt-32 pb-20 font-sans text-neutral-800 relative">
       <FadeInStagger>
         <FadeIn>
           <header className="mb-12">

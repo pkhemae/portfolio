@@ -5,6 +5,7 @@ import { remark } from "remark";
 import remarkRehype from "remark-rehype";
 import rehypeSlug from "rehype-slug";
 import rehypeStringify from "rehype-stringify";
+import GithubSlugger from "github-slugger";
 
 const postsDirectory = path.join(process.cwd(), "content/posts");
 
@@ -60,17 +61,6 @@ export function getAllPostSlugs() {
     });
 }
 
-// Simple slugger to match rehype-slug default behavior
-function slugify(text: string) {
-    return text
-        .toString()
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, "-") // Replace spaces with -
-        .replace(/[^\w\-]+/g, "") // Remove all non-word chars
-        .replace(/\-\-+/g, "-"); // Replace multiple - with single -
-}
-
 export async function getPostData(slug: string): Promise<Post> {
     const fullPath = path.join(postsDirectory, `${slug}.md`);
     const fileContents = fs.readFileSync(fullPath, "utf8");
@@ -79,6 +69,7 @@ export async function getPostData(slug: string): Promise<Post> {
     const matterResult = matter(fileContents);
 
     // Extract headings for TOC
+    const slugger = new GithubSlugger();
     const toc: { id: string; title: string; level: number }[] = [];
     const lines = matterResult.content.split("\n");
     lines.forEach((line) => {
@@ -86,7 +77,7 @@ export async function getPostData(slug: string): Promise<Post> {
         if (match) {
             const level = match[1].length;
             const title = match[2];
-            const id = slugify(title);
+            const id = slugger.slug(title);
             toc.push({ id, title, level });
         }
     });
