@@ -119,22 +119,9 @@ html {
 .mac-accent-text { color: var(--accent); }
 
 /* Original wallpaper: soft gradient landscape, light and dark variants. */
+/* Desktop picture: "Loupe Mono Dark" wallpaper by Raycast. */
 .os-wallpaper {
-  background:
-    radial-gradient(120% 90% at 12% 105%, #f4b28f 0%, rgba(244, 178, 143, 0) 55%),
-    radial-gradient(90% 80% at 95% 100%, #8f7cf2 0%, rgba(143, 124, 242, 0) 60%),
-    radial-gradient(110% 80% at 70% 0%, #6fb6ff 0%, rgba(111, 182, 255, 0) 60%),
-    radial-gradient(80% 70% at 20% 10%, #c9e2ff 0%, rgba(201, 226, 255, 0) 70%),
-    linear-gradient(160deg, #a9c6f2, #c8b7f0 60%, #f1c0a6);
-  transition: filter 0.8s ease;
-}
-
-.os-dark .os-wallpaper {
-  background:
-    radial-gradient(120% 90% at 12% 105%, #6b2f5e 0%, rgba(107, 47, 94, 0) 55%),
-    radial-gradient(90% 80% at 95% 100%, #2b2a8a 0%, rgba(43, 42, 138, 0) 60%),
-    radial-gradient(110% 80% at 70% 0%, #1b4c8f 0%, rgba(27, 76, 143, 0) 60%),
-    linear-gradient(160deg, #0e1a35, #1b1640 60%, #2a1430);
+  background: #070707 url("/wallpaper.jpg") center / cover no-repeat;
 }
 
 /* Note: no backdrop-filter anywhere in the OS. It is rendered inside a CSS3D
@@ -143,10 +130,10 @@ html {
 
 /* Menu bar */
 .menubar {
-  background: var(--menubar);
-  color: var(--text);
+  background: rgba(18, 18, 20, 0.42);
+  color: #fff;
 }
-.os-dark .menubar { color: #fff; }
+
 
 .menubar-item {
   display: inline-flex;
@@ -158,7 +145,7 @@ html {
 }
 button.menubar-item:hover,
 .menubar-item.is-open {
-  background: var(--control-hover);
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .mac-menu {
@@ -427,12 +414,11 @@ button.menubar-item:hover,
 
 /* Dock */
 .dock {
-  background: var(--dock);
-  border: 0.5px solid rgba(255, 255, 255, 0.45);
+  background: rgba(58, 58, 62, 0.46);
+  border: 0.5px solid rgba(255, 255, 255, 0.18);
   border-radius: 22px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18), inset 0 0 0 0.5px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35), inset 0 0 0 0.5px rgba(0, 0, 0, 0.25);
 }
-.os-dark .dock { border-color: rgba(255, 255, 255, 0.16); }
 .dock-item { display: block; }
 .dock-icon { transform-origin: 50% 100%; will-change: transform; }
 .dock-bounce { display: block; }
@@ -443,10 +429,8 @@ button.menubar-item:hover,
   0%, 100% { transform: translateY(0); }
   45% { transform: translateY(-38%); }
 }
-.dock-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(0, 0, 0, 0.6); transition: opacity 0.3s ease; }
-.os-dark .dock-dot { background: rgba(255, 255, 255, 0.8); }
-.dock-sep { width: 1px; background: rgba(0, 0, 0, 0.18); }
-.os-dark .dock-sep { background: rgba(255, 255, 255, 0.2); }
+.dock-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255, 255, 255, 0.8); transition: opacity 0.3s ease; }
+.dock-sep { width: 1px; background: rgba(255, 255, 255, 0.22); }
 .dock-tooltip {
   font-size: 13px;
   padding: 3px 10px;

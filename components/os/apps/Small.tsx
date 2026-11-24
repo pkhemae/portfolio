@@ -203,11 +203,6 @@ function DisplayArt() {
   return (
     <svg width="150" height="118" viewBox="0 0 150 118" aria-hidden>
       <defs>
-        <linearGradient id="about-wall" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#9cc8ff" />
-          <stop offset="0.55" stopColor="#b9a7f2" />
-          <stop offset="1" stopColor="#f2b79b" />
-        </linearGradient>
         <linearGradient id="about-alu" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#e4e5e8" />
           <stop offset="1" stopColor="#b9bcc1" />
@@ -217,7 +212,7 @@ function DisplayArt() {
       <rect x="44" y="106" width="62" height="5" rx="2.5" fill="url(#about-alu)" />
       <rect x="4" y="4" width="142" height="82" rx="5" fill="#d3d5d9" />
       <rect x="6" y="6" width="138" height="78" rx="4" fill="#0b0b0c" />
-      <rect x="9" y="9" width="132" height="72" rx="1.5" fill="url(#about-wall)" />
+      <image href="/wallpaper.jpg" x="9" y="9" width="132" height="72" preserveAspectRatio="xMidYMid slice" />
     </svg>
   );
 }
