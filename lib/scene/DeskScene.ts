@@ -4,6 +4,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { SCREEN, createDesk, createGround, createMug, createNotebook, createPlant } from "./objects";
 import { createBooks } from "./books";
+import { createLooseSheets, createWasteBasket } from "./clutter";
 import { createDeskMat, createDisplay, createKeyboard, createLamp, createMouse, createStickyNote } from "./hardware";
 import { Tween, createTween, cubicBezier, easeInOutCubic, easeOutExpo } from "./tween";
 
@@ -222,6 +223,8 @@ export class DeskScene {
     this.scene.add(this.plant.group);
     this.scene.add(createBooks());
     this.scene.add(createNotebook());
+    this.scene.add(createLooseSheets());
+    this.scene.add(createWasteBasket());
 
     this.screenLight = new THREE.PointLight("#bcd0ff", 0, 1.6, 2);
     this.screenLight.position.copy(this.monitor.screenCenter).addScaledVector(this.monitor.screenNormal, 0.25);
