@@ -44,6 +44,7 @@ export default function Experience({ posts }: ExperienceProps) {
   const [night, setNight] = useState(false);
   const [muted, setMuted] = useState(false);
   const [mobileOS, setMobileOS] = useState(false);
+  const [viewMoved, setViewMoved] = useState(false);
   const vp = useViewport();
   const compact = vp.w < 820 || vp.h < 520;
   const [loaderGone, setLoaderGone] = useState(false);
@@ -84,6 +85,7 @@ export default function Experience({ posts }: ExperienceProps) {
         onModeChange: setMode,
         onHover: setHover,
         onNightChange: setNight,
+        onViewChange: setViewMoved,
         onInteract: () => sound.click(),
       });
       sceneRef.current = scene;
@@ -131,7 +133,9 @@ export default function Experience({ posts }: ExperienceProps) {
       ? "Échap ou clic en dehors de l'écran pour revenir au bureau"
       : hover
         ? HINTS[hover]
-        : "Cliquez sur l'écran pour explorer · Fouillez le bureau";
+        : compact
+          ? "Glisser pour tourner · pincer pour zoomer · toucher l'écran pour l'explorer"
+          : "Glisser pour tourner · molette pour zoomer · cliquer sur l'écran pour l'explorer";
 
   return (
     <main className={`experience fixed inset-0 overflow-hidden ${night ? "is-night" : ""}`}>
@@ -167,6 +171,11 @@ export default function Experience({ posts }: ExperienceProps) {
           <p className="hud-sub font-mono text-[11px] uppercase tracking-[0.18em]">étudiant · BUT informatique</p>
         </div>
         <div className={`absolute top-5 right-5 sm:top-6 sm:right-7 flex items-center gap-1 ${started && mode !== "screen" ? "pointer-events-auto" : ""}`}>
+          {viewMoved && mode === "desk" && (
+            <button type="button" className="hud-btn" onClick={() => sceneRef.current?.resetView()}>
+              [recentrer]
+            </button>
+          )}
           <button type="button" className="hud-btn" onClick={toggleNight} aria-pressed={night}>
             [{night ? "jour" : "nuit"}]
           </button>

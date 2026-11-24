@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { CSS3DObject, CSS3DRenderer } from "three/examples/jsm/renderers/CSS3DRenderer.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import {
   SCREEN,
   createBooks,
@@ -28,8 +29,26 @@ export interface DeskSceneOptions {
   onHover?: (target: Interactive | null) => void;
   onInteract?: (target: Interactive) => void;
   onNightChange?: (night: boolean) => void;
+  /** Called when the free camera moves away from / back to the default view. */
+  onViewChange?: (moved: boolean) => void;
   reducedMotion?: boolean;
 }
+
+/** Bounds of the free camera around the desk. */
+const ORBIT = {
+  minDistance: 0.55,
+  maxDistance: 3.4,
+  /** Never look from below the desk top: the floor stays out of reach. */
+  minPolar: 0.3,
+  maxPolar: 1.62,
+  /** Horizontal half-range (radians) around the front of the desk. */
+  azimuth: 1.75,
+  /** The orbit target can wander a little (zoom to cursor), within this box. */
+  targetMin: new THREE.Vector3(-0.8, 0.78, -0.45),
+  targetMax: new THREE.Vector3(0.8, 1.25, 0.4),
+  /** Lowest camera height (floor is y = 0). */
+  minHeight: 0.3,
+};
 
 /**
  * The CSS3D world is scaled up so that the DOM element is not scaled down to
@@ -103,6 +122,13 @@ export class DeskScene {
 
   private camPos = new THREE.Vector3();
   private camTarget = new THREE.Vector3();
+  /** Camera driven by OrbitControls; the rendered camera adds parallax on top. */
+  private rig: THREE.PerspectiveCamera;
+  private controls: OrbitControls;
+  private dragging = false;
+  private viewMoved = false;
+  /** Free-camera view to return to after leaving the screen. */
+  private lastDeskView: CameraKey | null = null;
   private clock = new THREE.Clock();
   private raf = 0;
   private disposed = false;
@@ -142,6 +168,8 @@ export class DeskScene {
     // --- Camera ----------------------------------------------------------
     this.camera = new THREE.PerspectiveCamera(this.fovFor(width / height), width / height, 0.02, 60);
     this.cssCamera = this.camera.clone();
+    this.rig = this.camera.clone();
+    this.controls = this.createControls(container);
     const intro = this.introKey();
     this.camPos.copy(intro.position);
     this.camTarget.copy(intro.target);
@@ -225,11 +253,17 @@ export class DeskScene {
 
   /** Plays the intro camera flight towards the desk. */
   start() {
-    this.moveCamera(this.deskKey(), this.opts.reducedMotion ? 400 : 2800, easeOutExpo, () => this.setMode("desk"));
+    const key = this.deskKey();
+    this.moveCamera(key, this.opts.reducedMotion ? 400 : 2800, easeOutExpo, () => {
+      this.setMode("desk");
+      this.enableControls(key);
+    });
   }
 
   focusScreen() {
     if (this.mode === "screen") return;
+    this.lastDeskView = this.camTween ? null : { position: this.camPos.clone(), target: this.camTarget.clone() };
+    this.controls.enabled = false;
     this.setMode("screen");
     this.setScreenInteractive(true);
     this.moveCamera(this.screenKey(), this.opts.reducedMotion ? 300 : 1700, cubicBezier(0.6, 0.0, 0.1, 1));
@@ -239,7 +273,17 @@ export class DeskScene {
     if (this.mode !== "screen") return;
     this.setScreenInteractive(false);
     this.setMode("desk");
-    this.moveCamera(this.deskKey(), this.opts.reducedMotion ? 300 : 1500, easeInOutCubic);
+    // Go back to wherever the visitor was looking from.
+    const key = this.lastDeskView ?? this.deskKey();
+    this.moveCamera(key, this.opts.reducedMotion ? 300 : 1500, easeInOutCubic, () => this.enableControls(key));
+  }
+
+  /** Flies back to the default view of the desk. */
+  resetView() {
+    if (this.mode !== "desk") return;
+    this.controls.enabled = false;
+    const key = this.deskKey();
+    this.moveCamera(key, this.opts.reducedMotion ? 300 : 1200, easeInOutCubic, () => this.enableControls(key));
   }
 
   getMode() {
@@ -271,6 +315,7 @@ export class DeskScene {
     this.opts.container.removeEventListener("pointerdown", this.onPointerDown);
     this.opts.container.removeEventListener("pointerup", this.onPointerUp);
     window.removeEventListener("keydown", this.onKeyDown);
+    this.controls.dispose();
     this.scene.traverse((o) => {
       const mesh = o as THREE.Mesh;
       if (mesh.isMesh) {
@@ -334,6 +379,62 @@ export class DeskScene {
     };
   }
 
+  private createControls(container: HTMLElement) {
+    const controls = new OrbitControls(this.rig, container);
+    controls.enabled = false;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.enablePan = false;
+    controls.zoomToCursor = true;
+    controls.rotateSpeed = 0.55;
+    controls.zoomSpeed = 0.9;
+    controls.minDistance = ORBIT.minDistance;
+    controls.minPolarAngle = ORBIT.minPolar;
+    controls.maxPolarAngle = ORBIT.maxPolar;
+    controls.minAzimuthAngle = -ORBIT.azimuth;
+    controls.maxAzimuthAngle = ORBIT.azimuth;
+    controls.addEventListener("start", () => {
+      this.dragging = true;
+      container.style.cursor = "grabbing";
+    });
+    controls.addEventListener("end", () => {
+      this.dragging = false;
+      container.style.cursor = this.hovered ? "pointer" : "grab";
+    });
+    // OrbitControls disables touch scrolling on its element; restore it while
+    // the controls are off (the OS on the screen needs it).
+    container.style.touchAction = "";
+    return controls;
+  }
+
+  /** Hands the camera over to OrbitControls, starting from `key`. */
+  private enableControls(key: CameraKey) {
+    this.rig.position.copy(key.position);
+    this.controls.target.copy(key.target);
+    this.controls.maxDistance = ORBIT.maxDistance * this.distanceFactor();
+    this.controls.update();
+    this.controls.enabled = true;
+    this.opts.container.style.cursor = "grab";
+    this.opts.container.style.touchAction = "none";
+  }
+
+  private updateControls() {
+    if (!this.controls.enabled || this.camTween) return;
+    this.controls.update();
+    // Keep the orbit target near the desk and the camera above the floor.
+    this.controls.target.clamp(ORBIT.targetMin, ORBIT.targetMax);
+    if (this.rig.position.y < ORBIT.minHeight) this.rig.position.y = ORBIT.minHeight;
+    this.camPos.copy(this.rig.position);
+    this.camTarget.copy(this.controls.target);
+
+    const home = this.deskKey();
+    const moved = this.camPos.distanceTo(home.position) > 0.05 || this.camTarget.distanceTo(home.target) > 0.05;
+    if (moved !== this.viewMoved) {
+      this.viewMoved = moved;
+      this.opts.onViewChange?.(moved);
+    }
+  }
+
   private moveCamera(key: CameraKey, duration: number, easing: (t: number) => number, onDone?: () => void) {
     this.camTween?.cancel();
     const fromPos = this.camPos.clone();
@@ -353,19 +454,18 @@ export class DeskScene {
   }
 
   private applyCamera() {
-    const parallax = this.mode === "desk" && !this.camTween;
     const p = this.pointerSmoothed;
     this.camera.position.copy(this.camPos);
-    if (parallax || (this.mode === "desk" && this.camTween)) {
-      this.camera.position.x += p.x * 0.12;
-      this.camera.position.y += p.y * 0.05;
-    }
-    const target = this.camTarget.clone();
+    this.camera.lookAt(this.camTarget);
     if (this.mode === "desk") {
-      target.x += p.x * 0.03;
-      target.y += p.y * 0.02;
+      // Subtle parallax along the camera's own axes, scaled by distance.
+      const k = this.camPos.distanceTo(this.camTarget) * 0.04;
+      this.camera.updateMatrix();
+      const right = new THREE.Vector3().setFromMatrixColumn(this.camera.matrix, 0);
+      const up = new THREE.Vector3().setFromMatrixColumn(this.camera.matrix, 1);
+      this.camera.position.addScaledVector(right, p.x * k).addScaledVector(up, p.y * k * 0.5);
+      this.camera.lookAt(this.camTarget);
     }
-    this.camera.lookAt(target);
     this.camera.updateMatrixWorld();
 
     this.cssCamera.fov = this.camera.fov;
@@ -389,6 +489,10 @@ export class DeskScene {
   }
 
   private setScreenInteractive(on: boolean) {
+    if (on) {
+      this.opts.container.style.cursor = "";
+      this.opts.container.style.touchAction = "";
+    }
     const el = this.opts.screenElement;
     el.style.pointerEvents = on ? "auto" : "none";
     // Keep keyboard focus out of the screen while it is only decorative.
@@ -427,12 +531,14 @@ export class DeskScene {
     this.renderer.setSize(w, h);
     this.cssRenderer.setSize(w, h);
     // Snap to the right framing for the new viewport.
-    if (!this.camTween) {
-      const key = this.mode === "screen" ? this.screenKey() : this.mode === "desk" ? this.deskKey() : null;
-      if (key) {
-        this.camPos.copy(key.position);
-        this.camTarget.copy(key.target);
-      }
+    this.rig.aspect = this.camera.aspect;
+    this.rig.fov = this.camera.fov;
+    this.rig.updateProjectionMatrix();
+    this.controls.maxDistance = ORBIT.maxDistance * this.distanceFactor();
+    if (!this.camTween && this.mode === "screen") {
+      const key = this.screenKey();
+      this.camPos.copy(key.position);
+      this.camTarget.copy(key.target);
     }
   };
 
@@ -504,10 +610,10 @@ export class DeskScene {
 
   private updateHover() {
     let hovered: Interactive | null = null;
-    if (this.mode === "desk" && !this.camTween) hovered = this.pick();
+    if (this.mode === "desk" && !this.camTween && !this.dragging) hovered = this.pick();
     if (hovered !== this.hovered) {
       this.hovered = hovered;
-      this.opts.container.style.cursor = hovered ? "pointer" : "";
+      if (!this.dragging) this.opts.container.style.cursor = hovered ? "pointer" : this.mode === "desk" ? "grab" : "";
       this.opts.onHover?.(hovered);
     }
   }
@@ -534,9 +640,10 @@ export class DeskScene {
 
     this.camTween?.update(now);
     this.nightTween?.update(now);
+    this.updateControls();
 
     // Smooth parallax.
-    const target = this.mode === "desk" ? this.pointer : new THREE.Vector2();
+    const target = this.mode === "desk" && !this.dragging ? this.pointer : new THREE.Vector2();
     this.pointerSmoothed.lerp(target, 1 - Math.exp(-dt * 3));
 
     // Plant wiggle (damped) and idle sway.
