@@ -377,11 +377,30 @@ export function TextFileIcon({ size = 64, label = "TXT" }: { size?: number; labe
 
 /** Thumbnail-style icon for an image backed document (PDF, web page). */
 export function ThumbIcon({ src, size = 64, badge }: { src: string; size?: number; badge?: string }) {
+  // Explicit size that always fits in the icon box (a portrait page for a
+  // PDF, a landscape card otherwise), so the preview never spills over the
+  // file name below it.
+  const portrait = badge === "PDF";
+  const h = portrait ? size * 0.9 : (size * 0.9) / 1.6;
+  const w = portrait ? h * 0.707 : size * 0.9;
   return (
-    <span className="relative inline-grid place-items-center" style={{ width: size, height: size }}>
+    <span className="relative inline-grid place-items-center overflow-visible" style={{ width: size, height: size }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="" draggable={false} className="max-w-[88%] max-h-[88%] object-cover bg-white shadow-[0_1px_3px_rgba(0,0,0,0.25)] border border-black/10" style={{ aspectRatio: badge === "PDF" ? "0.707" : "1.6" }} />
-      {badge && <span className="absolute bottom-[8%] right-[4%] text-[9px] font-semibold px-1 rounded-[3px] bg-[#e5483b] text-white">{badge}</span>}
+      <img
+        src={src}
+        alt=""
+        draggable={false}
+        className="block object-cover object-top bg-white shadow-[0_1px_3px_rgba(0,0,0,0.25)] border border-black/10"
+        style={{ width: Math.round(w), height: Math.round(h) }}
+      />
+      {badge && (
+        <span
+          className="absolute font-semibold rounded-[3px] bg-[#e5483b] text-white leading-none"
+          style={{ fontSize: Math.max(7, size * 0.13), padding: `${size * 0.03}px ${size * 0.05}px`, right: (size - w) / 2 - size * 0.06, bottom: (size - h) / 2 + size * 0.06 }}
+        >
+          {badge}
+        </span>
+      )}
     </span>
   );
 }
