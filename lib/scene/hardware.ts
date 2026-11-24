@@ -126,16 +126,17 @@ export function createDisplay(): DisplayParts {
   head.add(body);
 
   const front = BZ + D / 2;
-  // Layers in front of the body are spread ~0.4 mm apart and the bezel is
-  // pushed back in depth, so they never z-fight when seen from far away.
-  const bezelMat = new THREE.MeshStandardMaterial({ color: "#050506", roughness: 0.08, metalness: 0.2, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+  // Layers in front of the body are spread a few tenths of a millimeter apart
+  // (far above the depth precision), with no polygon offset: an offset grows
+  // at grazing angles and made the bezel fight with the aluminium front.
+  const bezelMat = new THREE.MeshStandardMaterial({ color: "#050506", roughness: 0.08, metalness: 0.2 });
   const bezel = new THREE.Mesh(new THREE.ShapeGeometry(roundedRect(W - 0.004, H - 0.004, 0.007), 10), bezelMat);
-  bezel.position.set(0, centerY, front + 0.0004);
+  bezel.position.set(0, centerY, front + 0.0008);
   head.add(bezel);
 
   // Tiny camera at the top of the bezel.
   const cam = new THREE.Mesh(new THREE.CircleGeometry(0.0022, 20), std("#1a1c22", 0.2, 0.4));
-  cam.position.set(0, centerY + H / 2 - 0.0075, front + 0.0008);
+  cam.position.set(0, centerY + H / 2 - 0.0075, front + 0.0013);
   head.add(cam);
 
   const screenPlane = new THREE.Mesh(
@@ -144,7 +145,7 @@ export function createDisplay(): DisplayParts {
     // underneath shows through, while staying depth-occluded.
     new THREE.MeshBasicMaterial({ color: 0x000000, opacity: 0, transparent: true, blending: THREE.NoBlending, side: THREE.DoubleSide }),
   );
-  screenPlane.position.set(0, centerY, front + 0.0012);
+  screenPlane.position.set(0, centerY, front + 0.0016);
   screenPlane.name = "screen";
   screenPlane.renderOrder = 1;
   head.add(screenPlane);
@@ -153,7 +154,7 @@ export function createDisplay(): DisplayParts {
     new THREE.PlaneGeometry(SCREEN.width, SCREEN.height),
     new THREE.MeshBasicMaterial({ map: glassTexture(), transparent: true, opacity: 0.18, depthWrite: false }),
   );
-  glass.position.set(0, centerY, front + 0.002);
+  glass.position.set(0, centerY, front + 0.0026);
   glass.renderOrder = 3;
   head.add(glass);
 
@@ -161,7 +162,7 @@ export function createDisplay(): DisplayParts {
     new THREE.PlaneGeometry(SCREEN.width, SCREEN.height),
     new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0, depthWrite: false }),
   );
-  dimmer.position.set(0, centerY, front + 0.0016);
+  dimmer.position.set(0, centerY, front + 0.0021);
   dimmer.renderOrder = 2;
   head.add(dimmer);
 

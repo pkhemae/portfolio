@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Glyph } from "../Icons";
 import { PROFILE } from "../profile";
 import type { OSApi } from "../types";
@@ -10,26 +10,75 @@ import { Toolbar, ToolButton, useCopy } from "./shared";
 /* Aperçu (CV)                                                               */
 /* ------------------------------------------------------------------------ */
 
-export function Preview({ api }: { api: OSApi }) {
+export function Preview() {
   const [zoom, setZoom] = useState(1);
+  const [panning, setPanning] = useState(false);
+  const [canPan, setCanPan] = useState(false);
+  const scroller = useRef<HTMLDivElement>(null);
+  const pan = useRef<{ x: number; y: number; left: number; top: number; scale: number } | null>(null);
+  const keepCenter = useRef<{ cx: number; cy: number } | null>(null);
+
+  // Zoom around the middle of what is currently visible.
+  const zoomTo = (z: number) => {
+    const el = scroller.current;
+    if (el) {
+      keepCenter.current = {
+        cx: (el.scrollLeft + el.clientWidth / 2) / el.scrollWidth,
+        cy: (el.scrollTop + el.clientHeight / 2) / el.scrollHeight,
+      };
+    }
+    setZoom(Math.min(3, Math.max(0.5, +z.toFixed(2))));
+  };
+
+  useLayoutEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const c = keepCenter.current;
+    if (c) {
+      el.scrollLeft = c.cx * el.scrollWidth - el.clientWidth / 2;
+      el.scrollTop = c.cy * el.scrollHeight - el.clientHeight / 2;
+      keepCenter.current = null;
+    }
+    setCanPan(el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1);
+  }, [zoom]);
+
+  // Drag to move the document (mouse / pen; touch keeps native scrolling).
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = scroller.current;
+    if (!el || e.button !== 0 || e.pointerType === "touch" || !canPan) return;
+    e.preventDefault();
+    el.setPointerCapture(e.pointerId);
+    pan.current = { x: e.clientX, y: e.clientY, left: el.scrollLeft, top: el.scrollTop, scale: el.getBoundingClientRect().width / el.offsetWidth || 1 };
+    setPanning(true);
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = scroller.current;
+    const p = pan.current;
+    if (!el || !p) return;
+    el.scrollLeft = p.left - (e.clientX - p.x) / p.scale;
+    el.scrollTop = p.top - (e.clientY - p.y) / p.scale;
+  };
+  const endPan = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!pan.current) return;
+    scroller.current?.releasePointerCapture?.(e.pointerId);
+    pan.current = null;
+    setPanning(false);
+  };
+
   return (
     <div className="flex flex-col h-full min-h-0">
       <Toolbar leftInset>
         <div className="min-w-0">
           <p className="text-[13px] font-semibold leading-tight truncate">CV.pdf</p>
-          <p className="text-[11px] mac-text-3 leading-tight">1 page</p>
+          <p className="text-[11px] mac-text-3 leading-tight">1 page · {Math.round(zoom * 100)} %</p>
         </div>
         <div className="flex-1" />
-        {!api.compact && (
-          <>
-            <ToolButton label="Réduire" onClick={() => setZoom((z) => Math.max(0.6, +(z - 0.2).toFixed(1)))}>
-              <Glyph name="zoom-out" />
-            </ToolButton>
-            <ToolButton label="Agrandir" onClick={() => setZoom((z) => Math.min(2, +(z + 0.2).toFixed(1)))}>
-              <Glyph name="zoom-in" />
-            </ToolButton>
-          </>
-        )}
+        <ToolButton label="Zoom arrière" onClick={() => zoomTo(zoom - 0.25)} disabled={zoom <= 0.5}>
+          <Glyph name="zoom-out" />
+        </ToolButton>
+        <ToolButton label="Zoom avant" onClick={() => zoomTo(zoom + 0.25)} disabled={zoom >= 3}>
+          <Glyph name="zoom-in" />
+        </ToolButton>
         <a href="/cv.pdf" target="_blank" rel="noopener noreferrer" className="tool-btn" title="Ouvrir le PDF" aria-label="Ouvrir le PDF" data-no-drag>
           <Glyph name="external" />
         </a>
@@ -37,15 +86,31 @@ export function Preview({ api }: { api: OSApi }) {
           <Glyph name="download" />
         </a>
       </Toolbar>
-      <div className="preview-canvas flex-1 min-h-0 overflow-auto mac-scroll p-6">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/cv.pdf.png"
-          alt={`CV de ${PROFILE.name}`}
-          className="mx-auto bg-white shadow-[0_2px_14px_rgba(0,0,0,0.25)] max-w-none"
-          style={{ width: `${zoom * 100}%` }}
-          draggable={false}
-        />
+      <div
+        ref={scroller}
+        className={`preview-canvas flex-1 min-h-0 overflow-auto mac-scroll select-none ${canPan ? (panning ? "cursor-grabbing" : "cursor-grab") : ""}`}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endPan}
+        onPointerCancel={endPan}
+        onDoubleClick={() => zoomTo(zoom > 1 ? 1 : 1.75)}
+      >
+        {/* The page grows with the zoom; the scroll area grows with it, so
+            every part of the document stays reachable. */}
+        <div className="p-6" style={{ width: `${Math.max(1, zoom) * 100}%` }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/cv.pdf.png"
+            alt={`CV de ${PROFILE.name}`}
+            className="block mx-auto bg-white shadow-[0_2px_14px_rgba(0,0,0,0.25)] max-w-none"
+            style={{ width: `${Math.min(1, zoom) * 100}%` }}
+            draggable={false}
+            onLoad={() => {
+              const el = scroller.current;
+              if (el) setCanPan(el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1);
+            }}
+          />
+        </div>
       </div>
     </div>
   );

@@ -159,7 +159,7 @@ export default function OS({ posts, compact = false, width, height, powered, dar
       case "notes":
         return <Notes api={api} payload={w.payload} nav={w.nav} />;
       case "preview":
-        return <Preview api={api} />;
+        return <Preview />;
       case "mail":
         return <Mail />;
       case "terminal":
