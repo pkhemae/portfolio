@@ -31,16 +31,17 @@ export function woodTexture(): THREE.CanvasTexture {
   const { canvas, ctx } = makeCanvas(w, h);
   const rand = rng(7);
 
-  ctx.fillStyle = "#d8bf9c";
+  // Dark oak.
+  ctx.fillStyle = "#7a5233";
   ctx.fillRect(0, 0, w, h);
 
   // Broad tone variations.
   for (let i = 0; i < 18; i++) {
     const y = rand() * h;
     const grd = ctx.createLinearGradient(0, y - 80, 0, y + 80);
-    const tone = rand() > 0.5 ? "rgba(160,120,80," : "rgba(240,220,190,";
+    const tone = rand() > 0.5 ? "rgba(52,31,17," : "rgba(160,112,68,";
     grd.addColorStop(0, tone + "0)");
-    grd.addColorStop(0.5, tone + (0.08 + rand() * 0.1) + ")");
+    grd.addColorStop(0.5, tone + (0.12 + rand() * 0.16) + ")");
     grd.addColorStop(1, tone + "0)");
     ctx.fillStyle = grd;
     ctx.fillRect(0, y - 80, w, 160);
@@ -52,7 +53,7 @@ export function woodTexture(): THREE.CanvasTexture {
     const amp = 2 + rand() * 10;
     const freq = 0.001 + rand() * 0.004;
     const phase = rand() * Math.PI * 2;
-    ctx.strokeStyle = `rgba(${110 + rand() * 40},${75 + rand() * 30},${45 + rand() * 20},${0.04 + rand() * 0.12})`;
+    ctx.strokeStyle = `rgba(${40 + rand() * 30},${24 + rand() * 18},${12 + rand() * 12},${0.08 + rand() * 0.22})`;
     ctx.lineWidth = 0.6 + rand() * 1.6;
     ctx.beginPath();
     for (let x = 0; x <= w; x += 16) {
@@ -60,6 +61,19 @@ export function woodTexture(): THREE.CanvasTexture {
       if (x === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
+    ctx.stroke();
+  }
+
+  // Oak "ray flecks": short, slightly lighter streaks typical of quarter-sawn oak.
+  for (let i = 0; i < 260; i++) {
+    const x = rand() * w;
+    const y = rand() * h;
+    const len = 20 + rand() * 70;
+    ctx.strokeStyle = `rgba(170,125,80,${0.06 + rand() * 0.1})`;
+    ctx.lineWidth = 1 + rand() * 2.5;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + len, y + (rand() - 0.5) * 3);
     ctx.stroke();
   }
 
@@ -164,21 +178,5 @@ export function paperTexture(): THREE.CanvasTexture {
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
-  return tex;
-}
-
-/** Small text label for a book spine / cover. */
-export function labelTexture(text: string, bg: string, fg: string, w = 512, h = 128): THREE.CanvasTexture {
-  const { canvas, ctx } = makeCanvas(w, h);
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = fg;
-  ctx.font = `600 ${Math.round(h * 0.42)}px ui-monospace, 'SFMono-Regular', Menlo, monospace`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(text, w / 2, h / 2 + 2);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 4;
   return tex;
 }

@@ -35,7 +35,6 @@ const SCRIPT: Step[] = [
   { kind: "out", text: "", delay: 60 },
 ];
 
-const FINAL_CMD = "open http://localhost:3000";
 
 function lastLogin() {
   const d = new Date(Date.now() - 1000 * 60 * 47);
@@ -69,22 +68,20 @@ export default function Loader({ progress, onStart, leaving, note }: LoaderProps
   const started = useRef(false);
   const readyRef = useRef(false);
   readyRef.current = ready;
+  const [touch, setTouch] = useState(false);
+  useEffect(() => {
+    setTouch(window.matchMedia("(pointer: coarse)").matches);
+  }, []);
 
   // Play the script, one step at a time.
   useEffect(() => {
     if (step >= SCRIPT.length) {
-      // Type the final command and wait for Enter.
-      let i = 0;
-      const id = setInterval(() => {
-        i++;
-        setTyping({ prompt: PROMPT, text: FINAL_CMD.slice(0, i) });
-        if (i >= FINAL_CMD.length) {
-          clearInterval(id);
-          readyRef.current = true;
-          setReady(true);
-        }
-      }, 38);
-      return () => clearInterval(id);
+      // Server is up: ask the visitor to open it.
+      const id = setTimeout(() => {
+        readyRef.current = true;
+        setReady(true);
+      }, 120);
+      return () => clearTimeout(id);
     }
 
     const s = SCRIPT[step];
@@ -128,8 +125,8 @@ export default function Loader({ progress, onStart, leaving, note }: LoaderProps
   const go = () => {
     if (!readyRef.current || started.current) return;
     started.current = true;
-    setTyping(null);
-    setLines((l) => [...l, { prompt: PROMPT, text: FINAL_CMD }]);
+    setLines((l) => [...l, { text: "Opening http://localhost:3000 …", tone: "dim" }]);
+    setReady(false);
     onStart();
   };
 
@@ -150,6 +147,7 @@ export default function Loader({ progress, onStart, leaving, note }: LoaderProps
   return (
     <div
       className={`term-loader fixed inset-0 z-50 bg-[#1e1e1e] text-[#e6e6e6] transition-opacity duration-700 ${leaving ? "opacity-0 pointer-events-none" : "opacity-100"} ${ready ? "cursor-pointer" : ""}`}
+      data-ready={ready || undefined}
       onClick={go}
     >
       <div className="h-full overflow-hidden px-3 py-2 sm:px-4 sm:py-3 font-[Menlo,Monaco,'SF_Mono',var(--font-geist-mono),monospace] text-[12px] sm:text-[13px] leading-[1.45]">
@@ -166,12 +164,16 @@ export default function Loader({ progress, onStart, leaving, note }: LoaderProps
             <span className="term-caret" aria-hidden />
           </div>
         )}
-        {!typing && !leaving && step < SCRIPT.length && SCRIPT[step]?.kind !== "type" && <span className="term-caret term-caret--idle" aria-hidden />}
+        {ready && (
+          <div className="whitespace-pre-wrap break-words">
+            <span className="text-[#6cb6ff]">?</span> <span className="font-bold">{touch ? "Tap anywhere to open in browser" : "Press Enter to open in browser"}</span>
+            <span className="text-[#8b8b8b]"> › http://localhost:3000</span>
+            <span className="term-caret ml-1" aria-hidden />
+          </div>
+        )}
+        {!typing && !ready && !leaving && step < SCRIPT.length && SCRIPT[step]?.kind !== "type" && <span className="term-caret term-caret--idle" aria-hidden />}
       </div>
       {note && <p className="absolute bottom-3 left-4 text-[11px] text-[#6b6b6b] font-mono">{note}</p>}
-      <p className={`absolute bottom-3 right-4 text-[11px] text-[#5c5c5c] font-mono transition-opacity duration-500 ${ready && !leaving ? "opacity-100" : "opacity-0"}`} aria-hidden={!ready}>
-        ↵
-      </p>
       <span className="sr-only" role="status">
         {ready ? "Appuyez sur Entrée ou cliquez pour ouvrir le portfolio." : "Chargement du portfolio…"}
       </span>

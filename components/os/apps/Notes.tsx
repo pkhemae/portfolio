@@ -37,7 +37,7 @@ const NOTES: Note[] = [
         <h2>Par où commencer</h2>
         <ul className="checklist">
           <li>
-            <button type="button" onClick={() => api.openApp("safari", "projets")}>Parcourir mes projets</button> dans Safari
+            <button type="button" onClick={() => api.openApp("safari", "start")}>Parcourir mes projets</button> dans Safari
           </li>
           <li>
             <button type="button" onClick={() => api.openApp("preview")}>Lire mon CV</button> dans Aperçu

@@ -189,7 +189,7 @@ export function createDisplay(): DisplayParts {
 /* ------------------------------------------------------------------------ */
 
 export function createDeskMat() {
-  const mat = rbox(0.72, 0.003, 0.27, 0.0015, std("#4a4846", 0.97), 2);
+  const mat = rbox(0.72, 0.003, 0.27, 0.0015, std("#cfcac3", 0.97), 2);
   mat.position.set(0.04, DESK_TOP + 0.0015, 0.18);
   mat.castShadow = false;
   return mat;

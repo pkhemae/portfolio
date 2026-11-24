@@ -6,12 +6,11 @@ import { PROFILE } from "../profile";
 import type { OSApi, PostSummary } from "../types";
 import { Toolbar, ToolButton } from "./shared";
 
-/** Pages: "start", "projets", "post:<slug>". */
+/** Pages: "start" (home with favorites and all projects) and "post:<slug>". */
 type Page = string;
 
 function urlFor(page: Page) {
   if (page === "start") return "";
-  if (page === "projets") return `${PROFILE.domain}/projets`;
   if (page.startsWith("post:")) return `${PROFILE.domain}/projets/${page.slice(5)}`;
   return PROFILE.domain;
 }
@@ -76,7 +75,6 @@ export default function Safari({ api, payload, nav }: { api: OSApi; payload?: st
 
       <div ref={scroller} className="flex-1 min-h-0 overflow-auto mac-scroll safari-page">
         {page === "start" && <StartPage api={api} go={go} />}
-        {page === "projets" && <ProjectsPage posts={api.posts} go={go} />}
         {post && <Article post={post} go={go} />}
         {page.startsWith("post:") && !post && <p className="p-10 text-center mac-text-2">Safari ne parvient pas à trouver cette page.</p>}
       </div>
@@ -86,52 +84,59 @@ export default function Safari({ api, payload, nav }: { api: OSApi; payload?: st
 
 function StartPage({ api, go }: { api: OSApi; go: (p: Page) => void }) {
   const favorites = [
-    { label: "Mes projets", onClick: () => go("projets"), tile: <span className="text-[19px] font-bold tracking-tight">KP</span>, color: "#1D2DFF" },
-    { label: "GitHub", href: PROFILE.github, tile: <Glyph name="github" size={26} />, color: "#1f2328" },
-    { label: "LinkedIn", href: PROFILE.linkedin, tile: <Glyph name="linkedin" size={24} />, color: "#0a66c2" },
-    { label: "Université", href: PROFILE.university.url, tile: <span className="text-[17px] font-bold">UN</span>, color: "#e2001a" },
+    { label: "GitHub", href: PROFILE.github, logo: "github" as const },
+    { label: "LinkedIn", href: PROFILE.linkedin, logo: "linkedin" as const },
   ];
   return (
-    <div className="max-w-[720px] mx-auto px-8 py-10">
+    <div className="max-w-[760px] mx-auto px-8 py-10">
       <h2 className="text-[19px] font-bold mb-4">Favoris</h2>
-      <div className="grid grid-cols-4 max-sm:grid-cols-2 gap-5 mb-10">
-        {favorites.map((f) => {
-          const inner = (
-            <>
-              <span className="w-[64px] h-[64px] rounded-[14px] grid place-items-center text-white shadow-[0_1px_4px_rgba(0,0,0,0.15)]" style={{ background: f.color }}>
-                {f.tile}
-              </span>
-              <span className="text-[12px] mac-text-2 text-center">{f.label}</span>
-            </>
-          );
-          return f.href ? (
-            <a key={f.label} href={f.href} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 hover:opacity-80">
-              {inner}
-            </a>
-          ) : (
-            <button key={f.label} type="button" onClick={f.onClick} className="flex flex-col items-center gap-2 hover:opacity-80">
-              {inner}
-            </button>
-          );
-        })}
+      <div className="flex gap-6 mb-10">
+        {favorites.map((f) => (
+          <a key={f.label} href={f.href} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 w-[72px] hover:opacity-80">
+            <span className="w-[64px] h-[64px] rounded-[14px] grid place-items-center bg-white shadow-[0_1px_4px_rgba(0,0,0,0.15)] border border-black/5">
+              <BrandLogo brand={f.logo} size={34} />
+            </span>
+            <span className="text-[12px] mac-text-2 text-center">{f.label}</span>
+          </a>
+        ))}
       </div>
 
-      <h2 className="text-[19px] font-bold mb-4">Projets récents</h2>
-      <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
+      <h2 className="text-[19px] font-bold mb-4">Projets</h2>
+      <div className="flex flex-col gap-4">
         {api.posts.map((p) => (
-          <button key={p.slug} type="button" onClick={() => go(`post:${p.slug}`)} className="reading-card text-left rounded-[12px] overflow-hidden">
+          <button key={p.slug} type="button" onClick={() => go(`post:${p.slug}`)} className="reading-card flex max-sm:flex-col gap-5 text-left rounded-[14px] overflow-hidden p-3">
             {p.thumbnail && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.thumbnail} alt="" className="w-full aspect-[1.9] object-cover" draggable={false} />
+              <img src={p.thumbnail} alt="" className="w-[220px] max-sm:w-full aspect-[1.7] object-cover rounded-[9px] shrink-0" draggable={false} />
             )}
-            <div className="p-3">
-              <p className="text-[13px] font-semibold leading-snug line-clamp-2">{p.title}</p>
-              <p className="text-[12px] mac-text-3 mt-1">{PROFILE.domain}</p>
+            <div className="py-1 min-w-0">
+              <p className="text-[12px] mac-text-3 mb-1">{p.date}</p>
+              <p className="text-[17px] font-semibold leading-snug">{p.title}</p>
+              <p className="text-[13px] mac-text-2 mt-1.5 line-clamp-3">{p.description}</p>
             </div>
           </button>
         ))}
       </div>
     </div>
+  );
+}
+
+/** Official GitHub and LinkedIn marks, in their brand colours. */
+function BrandLogo({ brand, size }: { brand: "github" | "linkedin"; size: number }) {
+  if (brand === "linkedin") {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden>
+        <path
+          fill="#0A66C2"
+          d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.125 2.062 2.062 0 0 1 0 4.125zM7.119 20.452H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
+        />
+      </svg>
+    );
+  }
+  return (
+    <span className="text-[#181717]">
+      <Glyph name="github" size={size} />
+    </span>
   );
 }
 
@@ -143,7 +148,7 @@ function SiteHeader({ go }: { go: (p: Page) => void }) {
         {PROFILE.name}
       </button>
       <nav className="flex items-center gap-5 text-[13px] mac-text-2">
-        <button type="button" onClick={() => go("projets")} className="hover:opacity-70">
+        <button type="button" onClick={() => go("start")} className="hover:opacity-70">
           Projets
         </button>
         <a href={PROFILE.github} target="_blank" rel="noopener noreferrer" className="hover:opacity-70">
@@ -154,39 +159,12 @@ function SiteHeader({ go }: { go: (p: Page) => void }) {
   );
 }
 
-function ProjectsPage({ posts, go }: { posts: PostSummary[]; go: (p: Page) => void }) {
-  return (
-    <div>
-      <SiteHeader go={go} />
-      <div className="max-w-[760px] mx-auto px-8 py-12">
-        <p className="text-[13px] font-semibold mac-accent-text mb-2">Projets</p>
-        <h1 className="text-[36px] font-bold tracking-tight leading-tight mb-10">Ce sur quoi j&apos;ai travaillé.</h1>
-        <div className="flex flex-col gap-4">
-          {posts.map((p) => (
-            <button key={p.slug} type="button" onClick={() => go(`post:${p.slug}`)} className="reading-card flex max-sm:flex-col gap-5 text-left rounded-[14px] overflow-hidden p-3">
-              {p.thumbnail && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.thumbnail} alt="" className="w-[220px] max-sm:w-full aspect-[1.7] object-cover rounded-[9px] shrink-0" draggable={false} />
-              )}
-              <div className="py-1 min-w-0">
-                <p className="text-[12px] mac-text-3 mb-1">{p.date}</p>
-                <p className="text-[17px] font-semibold leading-snug">{p.title}</p>
-                <p className="text-[13px] mac-text-2 mt-1.5 line-clamp-3">{p.description}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function Article({ post, go }: { post: PostSummary; go: (p: Page) => void }) {
   return (
     <div>
       <SiteHeader go={go} />
       <article className="max-w-[720px] mx-auto px-8 py-12">
-        <button type="button" onClick={() => go("projets")} className="text-[13px] mac-accent-text mb-6 inline-flex items-center gap-1">
+        <button type="button" onClick={() => go("start")} className="text-[13px] mac-accent-text mb-6 inline-flex items-center gap-1">
           <Glyph name="chevron-left" size={13} /> Tous les projets
         </button>
         <p className="text-[13px] mac-text-3 mb-2">{post.date}</p>

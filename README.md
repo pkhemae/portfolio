@@ -8,11 +8,11 @@ Inspired by the concept of [Henry Heffernan's portfolio](https://github.com/henr
 
 ## 🚀 Features
 
-- **Bureau en 3D (Three.js)** : un bureau modélisé entièrement en code (aucun modèle à télécharger), avec un écran 27" façon Studio Display XDR (pied réglable en hauteur), un clavier façon Magic Keyboard (AZERTY, légendes sur les touches) et une souris façon Magic Mouse, une lampe d'architecte, une plante, une tasse de café, des livres et un carnet.
+- **Bureau en 3D (Three.js)** : un bureau modélisé entièrement en code (aucun modèle à télécharger), avec un écran 27" façon Studio Display XDR (pied réglable en hauteur), un clavier façon Magic Keyboard (AZERTY, légendes sur les touches) et une souris façon Magic Mouse, une lampe d'architecte, une plante, une tasse de café, une pile de classiques d'informatique et de maths (vrais titres, couvertures cartonnées et tranches de pages) et un carnet, sur un plateau en chêne foncé.
 - **Caméra libre** : on tourne à 360° autour du bureau (glisser) et on zoome / dézoome (molette ou pincement), le bureau restant toujours au centre de l'écran et sans jamais pouvoir passer sous le sol. En sortant de l'écran, on retrouve l'angle où l'on était.
-- **Écran de chargement** façon vraie session de terminal (zsh, `npm run start`, logs Next.js) : l'étape de compilation attend le vrai chargement de la scène 3D, puis on valide la dernière commande avec Entrée ou un clic.
+- **Écran de chargement** façon vraie session de terminal (zsh, `npm run start`, logs Next.js) : l'étape de compilation attend le vrai chargement de la scène 3D, puis « Press Enter to open in browser » (ou un clic).
 - **khémaraOS** : en cliquant sur l'écran, la caméra zoome et on utilise un petit OS inspiré de macOS, rendu sur l'écran via `CSS3DRenderer` : barre des menus, Dock avec effet de loupe et rebond au lancement, fenêtres déplaçables et redimensionnables, icônes sur le bureau.
-- **Applications** : Finder (projets, documents, applications, corbeille), Safari (pages des projets), Notes (à propos, compétences, liens), Aperçu (CV), Mail (contact), Terminal (`help`, `ls`, `cat`, `open`, `lampe`…), et la fenêtre « À propos de ce Mac ».
+- **Applications** : Finder (projets, documents, applications, corbeille), Safari (accueil avec favoris et projets, pages des projets), Notes (à propos, compétences, liens), Aperçu (CV), Mail (contact), Terminal (`help`, `ls`, `cat`, `open`, `lampe`…), et la fenêtre « À propos de ce Mac ».
 - **Lampe de bureau** : elle s'allume et s'éteint d'un clic et éclaire la tasse et le carnet.
 - **Mobile** : sur petit écran, l'ordinateur s'ouvre en plein écran avec une mise en page adaptée.
 - **Accessible et indexable** : contenu texte caché pour les lecteurs d'écran et les moteurs de recherche, pages d'articles statiques (`/blog/[slug]`), repli 2D si WebGL n'est pas disponible, respect de `prefers-reduced-motion`.

@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import {
-  labelTexture,
   paperTexture,
   radialShadowTexture,
   rng,
@@ -78,7 +77,7 @@ export function createDesk() {
   const group = new THREE.Group();
   const wood = woodTexture();
   wood.repeat.set(1, 1);
-  const topMat = std("#ffffff", 0.55, 0, { map: wood });
+  const topMat = std("#ffffff", 0.42, 0, { map: wood });
   const top = rbox(1.7, 0.035, 0.8, 0.012, topMat);
   top.position.y = DESK_TOP - 0.0175;
   group.add(top);
@@ -243,39 +242,6 @@ export function createPlant() {
   group.add(hit);
 
   return { group, foliage, hit };
-}
-
-export function createBooks() {
-  const group = new THREE.Group();
-  group.position.set(0.47, DESK_TOP, -0.2);
-  group.rotation.y = -0.25;
-
-  const books = [
-    { w: 0.2, h: 0.028, d: 0.27, color: "#1f1f22", label: "ALGO", fg: "#e9e5dd" },
-    { w: 0.19, h: 0.022, d: 0.25, color: "#f1ede6", label: "MATHS", fg: "#1f1f22" },
-    { w: 0.175, h: 0.032, d: 0.235, color: ACCENT, label: "KOTLIN", fg: "#ffffff" },
-  ];
-  let y = 0;
-  books.forEach((b, i) => {
-    const book = new THREE.Group();
-    const cover = rbox(b.w, b.h, b.d, 0.003, std(b.color, 0.6), 2);
-    book.add(cover);
-    const pages = rbox(b.w - 0.008, b.h * 0.8, b.d - 0.004, 0.001, std("#f7f3e8", 0.9), 1);
-    pages.position.x = 0.006;
-    book.add(pages);
-    const spine = new THREE.Mesh(
-      new THREE.PlaneGeometry(b.d * 0.7, b.h * 0.7),
-      new THREE.MeshStandardMaterial({ map: labelTexture(b.label, b.color, b.fg), roughness: 0.6 }),
-    );
-    spine.rotation.y = -Math.PI / 2;
-    spine.position.x = -b.w / 2 - 0.0005;
-    book.add(spine);
-    book.position.y = y + b.h / 2;
-    book.rotation.y = (i - 1) * 0.12;
-    y += b.h;
-    group.add(shadowed(book));
-  });
-  return group;
 }
 
 export function createNotebook() {

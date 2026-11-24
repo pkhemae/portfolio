@@ -2,7 +2,8 @@ import * as THREE from "three";
 import { CSS3DObject, CSS3DRenderer } from "three/examples/jsm/renderers/CSS3DRenderer.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { SCREEN, createBooks, createDesk, createGround, createMug, createNotebook, createPlant } from "./objects";
+import { SCREEN, createDesk, createGround, createMug, createNotebook, createPlant } from "./objects";
+import { createBooks } from "./books";
 import { createDeskMat, createDisplay, createKeyboard, createLamp, createMouse, createStickyNote } from "./hardware";
 import { Tween, createTween, cubicBezier, easeInOutCubic, easeOutExpo } from "./tween";
 
