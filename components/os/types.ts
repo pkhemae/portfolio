@@ -30,7 +30,6 @@ export interface OSApi {
   compact: boolean;
   dark: boolean;
   openApp: (app: AppId, payload?: string) => void;
-  toggleNight?: () => void;
   toggleLamp?: () => void;
   leave?: () => void;
 }

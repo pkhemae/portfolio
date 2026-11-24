@@ -2,112 +2,271 @@ import { useId } from "react";
 import type { AppId } from "./types";
 
 /**
- * App icons drawn for khémaraOS, in the spirit of macOS "squircle" icons.
- * Original artwork: simple glyphs on gradients.
+ * macOS-style app icons, redrawn by hand as SVG (no image assets).
+ * Every icon is drawn in a 100×100 box on the standard macOS icon grid.
  */
 
-function Squircle({ size, from, to, children, stroke }: { size: number; from: string; to: string; children?: React.ReactNode; stroke?: string }) {
-  const id = useId().replace(/:/g, "");
+const SQUIRCLE = "M50 6c30 0 44 4 44 44s-14 44-44 44S6 80 6 50 20 6 50 6z";
+
+function useIds(n: number) {
+  const base = useId().replace(/:/g, "");
+  return Array.from({ length: n }, (_, i) => `${base}${i}`);
+}
+
+function Frame({ size, children }: { size: number; children: React.ReactNode }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden className="mac-icon">
-      <defs>
-        <linearGradient id={`g${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={from} />
-          <stop offset="1" stopColor={to} />
-        </linearGradient>
-      </defs>
-      <rect x="6" y="6" width="88" height="88" rx="21" fill={`url(#g${id})`} stroke={stroke ?? "rgba(0,0,0,0.08)"} strokeWidth="0.8" />
       {children}
     </svg>
+  );
+}
+
+function Finder({ size }: { size: number }) {
+  const [clip, left, right] = useIds(3);
+  return (
+    <Frame size={size}>
+      <defs>
+        <clipPath id={clip}>
+          <path d={SQUIRCLE} />
+        </clipPath>
+        <linearGradient id={left} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#38b6ff" />
+          <stop offset="1" stopColor="#1d6fe0" />
+        </linearGradient>
+        <linearGradient id={right} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#f4f9fe" />
+          <stop offset="1" stopColor="#d5e7f8" />
+        </linearGradient>
+      </defs>
+      <g clipPath={`url(#${clip})`}>
+        <rect x="0" y="0" width="100" height="100" fill={`url(#${right})`} />
+        {/* Left (dark) half, its edge draws the profile and the nose. */}
+        <path d="M0 0h55c-2 10-4 22-5 33-1 8-3 15-9 22 4 1 8 1 12 1-1 13-1 26 2 44H0z" fill={`url(#${left})`} />
+      </g>
+      <rect x="30" y="27" width="5" height="15" rx="2.5" fill="#0d2742" />
+      <rect x="68" y="27" width="5" height="15" rx="2.5" fill="#0d2742" />
+      <path d="M24 66c16 12 38 12 54 -2" stroke="#0d2742" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <path d={SQUIRCLE} fill="none" stroke="rgba(0,0,0,0.12)" strokeWidth="0.8" />
+    </Frame>
+  );
+}
+
+function Safari({ size }: { size: number }) {
+  const [bg, dial] = useIds(2);
+  return (
+    <Frame size={size}>
+      <defs>
+        <linearGradient id={bg} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="1" stopColor="#e3e6ea" />
+        </linearGradient>
+        <radialGradient id={dial} cx="0.5" cy="0.35" r="0.7">
+          <stop offset="0" stopColor="#5fd0ff" />
+          <stop offset="1" stopColor="#1a6fe8" />
+        </radialGradient>
+      </defs>
+      <path d={SQUIRCLE} fill={`url(#${bg})`} stroke="rgba(0,0,0,0.1)" strokeWidth="0.8" />
+      <circle cx="50" cy="50" r="36" fill={`url(#${dial})`} />
+      {Array.from({ length: 60 }).map((_, i) => {
+        const a = (i / 60) * Math.PI * 2;
+        const long = i % 5 === 0;
+        const r1 = long ? 29 : 31;
+        return <line key={i} x1={50 + Math.cos(a) * r1} y1={50 + Math.sin(a) * r1} x2={50 + Math.cos(a) * 34} y2={50 + Math.sin(a) * 34} stroke="#fff" strokeWidth={long ? 1.4 : 0.7} opacity="0.85" />;
+      })}
+      <g transform="rotate(45 50 50)">
+        <path d="M50 22 L55 50 L45 50 Z" fill="#ff3b30" />
+        <path d="M50 78 L55 50 L45 50 Z" fill="#ffffff" />
+      </g>
+      <circle cx="50" cy="50" r="2" fill="#fff" />
+    </Frame>
+  );
+}
+
+function Notes({ size }: { size: number }) {
+  const [clip, band] = useIds(2);
+  return (
+    <Frame size={size}>
+      <defs>
+        <clipPath id={clip}>
+          <path d={SQUIRCLE} />
+        </clipPath>
+        <linearGradient id={band} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffe06b" />
+          <stop offset="1" stopColor="#f8c513" />
+        </linearGradient>
+      </defs>
+      <g clipPath={`url(#${clip})`}>
+        <rect width="100" height="100" fill="#fdfdfb" />
+        <rect width="100" height="30" fill={`url(#${band})`} />
+        <path d="M6 33h88" stroke="#c9c9c9" strokeWidth="1.6" strokeDasharray="2 3" />
+        {[46, 58, 70, 82].map((y) => (
+          <line key={y} x1="10" y1={y} x2="90" y2={y} stroke="#e1e1e1" strokeWidth="1.4" />
+        ))}
+      </g>
+      <path d={SQUIRCLE} fill="none" stroke="rgba(0,0,0,0.12)" strokeWidth="0.8" />
+    </Frame>
+  );
+}
+
+function Preview({ size }: { size: number }) {
+  const [bg, sky, glass] = useIds(3);
+  return (
+    <Frame size={size}>
+      <defs>
+        <linearGradient id={bg} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#f6f7f9" />
+          <stop offset="1" stopColor="#d9dde3" />
+        </linearGradient>
+        <linearGradient id={sky} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#7cc7ff" />
+          <stop offset="1" stopColor="#d6efff" />
+        </linearGradient>
+        <radialGradient id={glass} cx="0.4" cy="0.35" r="0.7">
+          <stop offset="0" stopColor="rgba(255,255,255,0.9)" />
+          <stop offset="1" stopColor="rgba(190,225,255,0.45)" />
+        </radialGradient>
+      </defs>
+      <path d={SQUIRCLE} fill={`url(#${bg})`} stroke="rgba(0,0,0,0.1)" strokeWidth="0.8" />
+      <g transform="rotate(-8 44 46)">
+        <rect x="18" y="22" width="52" height="42" rx="2" fill="#fff" stroke="rgba(0,0,0,0.12)" />
+        <rect x="22" y="26" width="44" height="34" fill={`url(#${sky})`} />
+        <path d="M22 60l12-14 8 8 10-12 14 18z" fill="#3fa34d" />
+        <circle cx="56" cy="34" r="4" fill="#ffd23f" />
+      </g>
+      <circle cx="62" cy="60" r="15" fill={`url(#${glass})`} stroke="#3a3a3c" strokeWidth="4" />
+      <path d="M73 71l12 12" stroke="#3a3a3c" strokeWidth="7" strokeLinecap="round" />
+    </Frame>
+  );
+}
+
+function Mail({ size }: { size: number }) {
+  const [bg, env] = useIds(2);
+  return (
+    <Frame size={size}>
+      <defs>
+        <linearGradient id={bg} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#5ec6ff" />
+          <stop offset="1" stopColor="#1677f0" />
+        </linearGradient>
+        <linearGradient id={env} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="1" stopColor="#e6eef7" />
+        </linearGradient>
+      </defs>
+      <path d={SQUIRCLE} fill={`url(#${bg})`} />
+      <rect x="18" y="30" width="64" height="42" rx="4" fill={`url(#${env})`} />
+      <path d="M19 33l31 22 31-22" stroke="#b8c8da" strokeWidth="2.5" fill="none" strokeLinejoin="round" />
+      <path d="M19 70l23-18M81 70l-23-18" stroke="#d3dde9" strokeWidth="2" />
+    </Frame>
+  );
+}
+
+function Terminal({ size }: { size: number }) {
+  const [frame] = useIds(1);
+  return (
+    <Frame size={size}>
+      <defs>
+        <linearGradient id={frame} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#d4d4d6" />
+          <stop offset="1" stopColor="#9c9ca1" />
+        </linearGradient>
+      </defs>
+      <path d={SQUIRCLE} fill={`url(#${frame})`} />
+      <rect x="13" y="15" width="74" height="70" rx="9" fill="#1b1b1d" />
+      <path d="M22 28l9 7-9 7" stroke="#f2f2f2" strokeWidth="3.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M35 43h12" stroke="#f2f2f2" strokeWidth="3.6" strokeLinecap="round" />
+    </Frame>
+  );
+}
+
+function ActivityMonitor({ size }: { size: number }) {
+  const [frame] = useIds(1);
+  return (
+    <Frame size={size}>
+      <defs>
+        <linearGradient id={frame} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#d4d4d6" />
+          <stop offset="1" stopColor="#9c9ca1" />
+        </linearGradient>
+      </defs>
+      <path d={SQUIRCLE} fill={`url(#${frame})`} />
+      <rect x="13" y="15" width="74" height="70" rx="9" fill="#141415" />
+      {[32, 50, 68].map((y) => (
+        <line key={y} x1="18" y1={y} x2="82" y2={y} stroke="#1f3a24" strokeWidth="1" />
+      ))}
+      {[34, 50, 66].map((x) => (
+        <line key={x} x1={x} y1="19" x2={x} y2="81" stroke="#1f3a24" strokeWidth="1" />
+      ))}
+      <path d="M17 56h14l5-16 8 30 7-24 5 10h27" stroke="#3ce35a" strokeWidth="3.2" fill="none" strokeLinejoin="round" strokeLinecap="round" />
+    </Frame>
+  );
+}
+
+function SystemInfo({ size }: { size: number }) {
+  const [bg] = useIds(1);
+  return (
+    <Frame size={size}>
+      <defs>
+        <linearGradient id={bg} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#e9eaed" />
+          <stop offset="1" stopColor="#b9bcc2" />
+        </linearGradient>
+      </defs>
+      <path d={SQUIRCLE} fill={`url(#${bg})`} />
+      <g transform="translate(26 22) scale(2)" fill="#3a3a3c">
+        <path d={APPLE_PATH} />
+      </g>
+    </Frame>
+  );
+}
+
+function Trash({ size, full }: { size: number; full?: boolean }) {
+  const [body] = useIds(1);
+  return (
+    <Frame size={size}>
+      <defs>
+        <linearGradient id={body} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="rgba(225,229,234,0.75)" />
+          <stop offset="0.5" stopColor="rgba(250,251,252,0.9)" />
+          <stop offset="1" stopColor="rgba(215,219,225,0.75)" />
+        </linearGradient>
+      </defs>
+      <path d="M22 24h56l-5 64a5 5 0 0 1-5 5H32a5 5 0 0 1-5-5z" fill={`url(#${body})`} stroke="#aeb4bc" strokeWidth="1.2" />
+      {full && <path d="M28 26q6-12 16-6t14-4 14 8l-1 4H28z" fill="#fafafa" stroke="#c6cad0" strokeWidth="0.8" />}
+      {Array.from({ length: 9 }).map((_, i) => {
+        const x = 28 + i * 5.5;
+        return <line key={i} x1={x} y1="30" x2={x + (50 - x) * 0.08} y2="88" stroke="#bfc5cc" strokeWidth="0.9" />;
+      })}
+      {[40, 54, 68, 82].map((y) => (
+        <line key={y} x1="24" y1={y} x2="76" y2={y} stroke="#c9ced4" strokeWidth="0.7" />
+      ))}
+      <ellipse cx="50" cy="24" rx="29" ry="4.5" fill="#eceff2" stroke="#a7adb6" strokeWidth="1.2" />
+    </Frame>
   );
 }
 
 export function AppIcon({ app, size = 48 }: { app: AppId | "trash" | "trash-full"; size?: number }) {
   switch (app) {
     case "finder":
-      return (
-        <Squircle size={size} from="#6fd0ff" to="#1673e6">
-          <path d="M26 36h18l5 6h25v28a4 4 0 0 1-4 4H30a4 4 0 0 1-4-4z" fill="#fff" opacity="0.95" />
-          <path d="M26 46h48" stroke="#9fd2ff" strokeWidth="2.5" />
-          <path d="M40 58q10 8 20 0" stroke="#1673e6" strokeWidth="3" fill="none" strokeLinecap="round" />
-        </Squircle>
-      );
+      return <Finder size={size} />;
     case "safari":
-      return (
-        <Squircle size={size} from="#ffffff" to="#e9edf2">
-          <circle cx="50" cy="50" r="33" fill="#2f8cff" />
-          <circle cx="50" cy="50" r="29" fill="#56b2ff" />
-          {Array.from({ length: 24 }).map((_, i) => {
-            const a = (i / 24) * Math.PI * 2;
-            return <line key={i} x1={50 + Math.cos(a) * 25} y1={50 + Math.sin(a) * 25} x2={50 + Math.cos(a) * 28} y2={50 + Math.sin(a) * 28} stroke="#fff" strokeWidth="1.2" opacity="0.8" />;
-          })}
-          <path d="M50 50 L66 34 L54 54 Z" fill="#ff3b30" />
-          <path d="M50 50 L34 66 L46 46 Z" fill="#fff" />
-        </Squircle>
-      );
+      return <Safari size={size} />;
     case "notes":
-      return (
-        <Squircle size={size} from="#ffffff" to="#f4f4f4">
-          <path d="M6 27V27a21 21 0 0 1 21-21h46a21 21 0 0 1 21 21v4H6z" fill="#ffd60a" />
-          <path d="M6 31h88" stroke="#e8be00" strokeWidth="1.5" />
-          {[44, 56, 68, 80].map((y) => (
-            <line key={y} x1="18" y1={y} x2="82" y2={y} stroke="#d9d9de" strokeWidth="2" />
-          ))}
-        </Squircle>
-      );
+      return <Notes size={size} />;
     case "preview":
-      return (
-        <Squircle size={size} from="#8ad7ff" to="#2c7fe0">
-          <rect x="24" y="22" width="44" height="56" rx="3" fill="#fff" />
-          <rect x="34" y="32" width="44" height="46" rx="3" fill="#fff" stroke="#2c7fe0" strokeWidth="1.5" />
-          <circle cx="47" cy="45" r="4" fill="#ffcc00" />
-          <path d="M37 72l12-14 8 9 6-6 13 11z" fill="#34c759" />
-        </Squircle>
-      );
+      return <Preview size={size} />;
     case "mail":
-      return (
-        <Squircle size={size} from="#5ab8ff" to="#1665d8">
-          <rect x="20" y="30" width="60" height="40" rx="4" fill="#fff" />
-          <path d="M21 33l29 21 29-21" stroke="#9cc7f5" strokeWidth="3" fill="none" />
-        </Squircle>
-      );
+      return <Mail size={size} />;
     case "terminal":
-      return (
-        <Squircle size={size} from="#3a3a3f" to="#1c1c1f" stroke="rgba(255,255,255,0.12)">
-          <path d="M24 40l12 9-12 9" stroke="#fff" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M42 62h22" stroke="#fff" strokeWidth="5" strokeLinecap="round" />
-        </Squircle>
-      );
+      return <Terminal size={size} />;
     case "activity":
-      return (
-        <Squircle size={size} from="#2b2b30" to="#0f0f12" stroke="rgba(255,255,255,0.12)">
-          {[30, 50, 70].map((y) => (
-            <line key={y} x1="16" y1={y} x2="84" y2={y} stroke="#2f3b31" strokeWidth="1.2" />
-          ))}
-          <path d="M16 58h14l6-20 9 34 8-26 6 12h25" stroke="#32d74b" strokeWidth="4" fill="none" strokeLinejoin="round" strokeLinecap="round" />
-        </Squircle>
-      );
+      return <ActivityMonitor size={size} />;
     case "about":
-      return (
-        <Squircle size={size} from="#d9dce1" to="#9ea3ab">
-          <circle cx="50" cy="50" r="24" fill="#fff" />
-          <text x="50" y="58" textAnchor="middle" fontSize="24" fontWeight="700" fill="#5b6068" fontFamily="-apple-system, Inter, sans-serif">
-            KP
-          </text>
-        </Squircle>
-      );
+      return <SystemInfo size={size} />;
     case "trash":
+      return <Trash size={size} />;
     case "trash-full":
-      return (
-        <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden className="mac-icon">
-          <path d="M24 26h52l-5 62a5 5 0 0 1-5 4H34a5 5 0 0 1-5-4z" fill="rgba(235,238,242,0.85)" stroke="#a7adb6" strokeWidth="1.5" />
-          {app === "trash-full" && <path d="M30 30q8-10 18-2t20-2l-2 12H32z" fill="#f2f2f2" stroke="#c3c7cd" strokeWidth="1" />}
-          {[38, 50, 62].map((x) => (
-            <line key={x} x1={x} y1="34" x2={x} y2="84" stroke="#b4bac2" strokeWidth="1.5" />
-          ))}
-          <rect x="20" y="20" width="60" height="8" rx="4" fill="#dfe3e8" stroke="#a7adb6" strokeWidth="1.5" />
-        </svg>
-      );
+      return <Trash size={size} full />;
   }
 }
 
@@ -227,12 +386,16 @@ export function Glyph({ name, size = 16 }: { name: string; size?: number }) {
   }
 }
 
-/** Logo used in the menu bar and on the boot screen. */
+
+/** Apple logo (24×24 path). */
+const APPLE_PATH =
+  "M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701";
+
+/** Apple logo, used in the menu bar, on the boot screen and in "About". */
 export function Logo({ size = 15 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden>
-      <circle cx="12" cy="12" r="10" fill="currentColor" />
-      <path d="M9 7v10M9 12l5-5M10.5 10.5L15 17" stroke="var(--logo-cut, #fff)" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden fill="currentColor">
+      <path d={APPLE_PATH} />
     </svg>
   );
 }

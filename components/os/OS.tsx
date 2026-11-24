@@ -10,7 +10,6 @@ import Notes from "./apps/Notes";
 import Terminal from "./apps/Terminal";
 import { About, Activity, Mail, Preview } from "./apps/Small";
 import type { AppId, OSApi, PostSummary, WindowState } from "./types";
-import { sound } from "@/lib/sound";
 
 interface OSProps {
   posts: PostSummary[];
@@ -24,7 +23,6 @@ interface OSProps {
   /** Dark appearance (follows the room's night mode). */
   dark?: boolean;
   onLeave?: () => void;
-  onToggleNight?: () => void;
   onToggleLamp?: () => void;
 }
 
@@ -40,7 +38,7 @@ function useClock() {
   return now;
 }
 
-export default function OS({ posts, compact = false, width, height, powered, dark = false, onLeave, onToggleNight, onToggleLamp }: OSProps) {
+export default function OS({ posts, compact = false, width, height, powered, dark = false, onLeave, onToggleLamp }: OSProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [windows, setWindows] = useState<WindowState[]>([]);
   const [phase, setPhase] = useState<"off" | "boot" | "on">(powered ? "on" : "off");
@@ -114,15 +112,11 @@ export default function OS({ posts, compact = false, width, height, powered, dar
   useEffect(() => {
     if (!powered || phase !== "off") return;
     setPhase("boot");
-    const t1 = setTimeout(() => sound.chime(), 250);
     const t2 = setTimeout(() => {
       setPhase("on");
       openApp("notes", "about");
     }, 2300);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    return () => clearTimeout(t2);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [powered]);
 
@@ -132,7 +126,7 @@ export default function OS({ posts, compact = false, width, height, powered, dar
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const api: OSApi = { posts, compact, dark, openApp, toggleNight: onToggleNight, toggleLamp: onToggleLamp, leave: onLeave };
+  const api: OSApi = { posts, compact, dark, openApp, toggleLamp: onToggleLamp, leave: onLeave };
 
   const renderApp = (w: WindowState) => {
     switch (w.id) {
@@ -162,7 +156,7 @@ export default function OS({ posts, compact = false, width, height, powered, dar
     patch(w.id, { minimized: true });
   };
 
-  const activeName = focusedId ? APPS[focusedId].name : "Finder";
+  const activeName = focusedId && focusedId !== "about" ? APPS[focusedId].name : "Finder";
 
   const desktopItems = [
     { key: "projets", label: "Projets", icon: <FolderIcon size={60} />, open: () => openApp("finder", "projets") },
@@ -175,10 +169,6 @@ export default function OS({ posts, compact = false, width, height, powered, dar
       ref={rootRef}
       className={`os-root relative overflow-hidden select-none ${dark ? "os-dark" : ""} ${compact ? "os-compact" : ""}`}
       style={{ width, height }}
-      onPointerDown={() => sound.click()}
-      onKeyDown={(e) => {
-        if (!e.repeat) sound.key();
-      }}
     >
       <div
         className="os-wallpaper absolute inset-0"
@@ -192,7 +182,7 @@ export default function OS({ posts, compact = false, width, height, powered, dar
       {/* Menu bar */}
       <div className="menubar absolute top-0 inset-x-0 flex items-center justify-between px-2.5 z-[9000] text-[13px]" style={{ height: MENU_H }}>
         <div className="flex items-center min-w-0">
-          <button type="button" className={`menubar-item ${menuOpen ? "is-open" : ""}`} onClick={() => setMenuOpen((o) => !o)} aria-label="Menu khémaraOS">
+          <button type="button" className={`menubar-item ${menuOpen ? "is-open" : ""}`} onClick={() => setMenuOpen((o) => !o)} aria-label="Menu Apple">
             <Logo size={15} />
           </button>
           <span className="menubar-item font-bold">{activeName}</span>
@@ -206,9 +196,6 @@ export default function OS({ posts, compact = false, width, height, powered, dar
         <div className="flex items-center shrink-0">
           {!compact && (
             <>
-              <button type="button" className="menubar-item" onClick={onToggleNight} title={dark ? "Mode clair" : "Mode sombre"} aria-label={dark ? "Mode clair" : "Mode sombre"}>
-                <Glyph name={dark ? "sun" : "moon"} size={15} />
-              </button>
               <span className="menubar-item menubar-item--static">
                 <Glyph name="battery" size={14} />
               </span>
@@ -231,21 +218,11 @@ export default function OS({ posts, compact = false, width, height, powered, dar
       {menuOpen && (
         <div className="mac-menu absolute left-2 z-[9500] w-[260px] py-1.5 text-[13px]" style={{ top: MENU_H + 2 }}>
           <button type="button" className="mac-menu-item" onClick={() => openApp("about")}>
-            À propos de ce portfolio
+            À propos de ce Mac
           </button>
           <div className="mac-menu-sep" />
           <button type="button" className="mac-menu-item" onClick={() => openApp("finder", "applications")}>
             Applications…
-          </button>
-          <button
-            type="button"
-            className="mac-menu-item"
-            onClick={() => {
-              setMenuOpen(false);
-              onToggleNight?.();
-            }}
-          >
-            {dark ? "Passer en mode clair" : "Passer en mode sombre"}
           </button>
           <button
             type="button"
@@ -326,7 +303,7 @@ export default function OS({ posts, compact = false, width, height, powered, dar
       {phase !== "on" && (
         <div className={`absolute inset-0 z-[9999] grid place-items-center bg-black ${phase === "boot" ? "os-boot" : ""}`}>
           {phase === "boot" && (
-            <div className="flex flex-col items-center gap-12 text-white [--logo-cut:#000]">
+            <div className="flex flex-col items-center gap-12 text-white">
               <Logo size={80} />
               <div className="w-[190px] h-[5px] rounded-full bg-white/20 overflow-hidden">
                 <div className="h-full bg-white os-progress rounded-full" />

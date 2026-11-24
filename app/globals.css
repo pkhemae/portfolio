@@ -91,39 +91,6 @@ html {
 .experience {
   --scene-bg: #ece7de;
   background: var(--scene-bg);
-  --hud-fg: #171717;
-  --hud-muted: #8a857c;
-}
-
-.experience.is-night {
-  --hud-fg: #ece7de;
-  --hud-muted: #77736b;
-}
-
-.hud-title {
-  color: var(--hud-fg);
-  transition: color 0.8s ease;
-}
-
-.hud-sub,
-.hud-hint {
-  color: var(--hud-muted);
-  transition: color 0.8s ease, opacity 0.3s ease;
-}
-
-.hud-btn {
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
-  font-size: 12px;
-  color: var(--hud-muted);
-  padding: 2px 6px;
-  border-radius: 2px;
-  transition: background-color 0.15s ease, color 0.15s ease;
-  cursor: pointer;
-}
-
-.hud-btn:hover {
-  background: #1d2dff;
-  color: #fff;
 }
 
 /* Animated film grain over the whole scene. */
@@ -135,11 +102,6 @@ html {
   mix-blend-mode: multiply;
 }
 
-.is-night .grain {
-  mix-blend-mode: screen;
-  opacity: 0.05;
-}
-
 @keyframes grain {
   0% { transform: translate(0, 0); }
   33% { transform: translate(-3%, 2%); }
@@ -147,13 +109,23 @@ html {
   100% { transform: translate(0, 0); }
 }
 
-.loader-line {
-  animation: loader-in 0.25s ease-out both;
+/* Terminal-style loader */
+.term-loader-scanlines {
+  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
 }
 
-@keyframes loader-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: none; }
+.term-caret {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: -0.2em;
+  background: #d8d8d8;
+  animation: term-blink 1s steps(1) infinite;
+}
+
+@keyframes term-blink {
+  50% { opacity: 0; }
 }
 
 /* ------------------------------------------------------------------------ */
@@ -186,7 +158,6 @@ html {
   --graph-muted: #8a8a8f;
   --graph-faint: #ececef;
   --graph-accent: #0a7aff;
-  --logo-cut: #fff;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), "Helvetica Neue", sans-serif;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -214,7 +185,6 @@ html {
   --graph-muted: #8e8e93;
   --graph-faint: #2c2c30;
   --graph-accent: #0a84ff;
-  --logo-cut: #1d1d1f;
 }
 
 .mac-text-2 { color: var(--text-2); }
@@ -587,7 +557,8 @@ button.menubar-item:hover,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .grain {
+  .grain,
+  .term-caret {
     animation: none;
   }
 }

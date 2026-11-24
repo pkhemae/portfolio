@@ -66,7 +66,6 @@ export default function Terminal({ api }: { api: OSApi }) {
         say("projets         lister mes projets");
         say("contact         afficher mes coordonnées");
         say("lampe           allumer / éteindre la lampe du bureau");
-        say("nuit            passer la pièce en mode jour / nuit");
         say("clear           effacer   ·   exit   revenir au bureau 3D");
         break;
       case "whoami":
@@ -106,11 +105,6 @@ export default function Terminal({ api }: { api: OSApi }) {
           api.toggleLamp();
           say("clic.");
         } else say("lampe: aucune lampe détectée.", "err");
-        break;
-      case "nuit":
-      case "jour":
-        if (api.toggleNight) api.toggleNight();
-        else say("nuit: indisponible ici.", "err");
         break;
       case "date":
         say(new Date().toLocaleString("fr-FR", { dateStyle: "full", timeStyle: "short" }));
@@ -158,7 +152,7 @@ export default function Terminal({ api }: { api: OSApi }) {
       const [c, ...rest] = value.split(" ");
       const partial = rest.join(" ");
       if (rest.length === 0) {
-        const m = ["help", "whoami", "ls", "cat", "open", "projets", "contact", "lampe", "nuit", "date", "clear", "exit", "echo"].find((x) => x.startsWith(c));
+        const m = ["help", "whoami", "ls", "cat", "open", "projets", "contact", "lampe", "date", "clear", "exit", "echo"].find((x) => x.startsWith(c));
         if (m) setValue(m + " ");
       } else {
         const m = [...files, ...Object.keys(APP_ALIASES)].find((f) => f.startsWith(partial));

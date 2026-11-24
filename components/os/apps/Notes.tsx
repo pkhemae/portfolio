@@ -49,7 +49,7 @@ const NOTES: Note[] = [
             <button type="button" onClick={() => api.openApp("terminal")}>Ouvrir le Terminal</button> et taper <code>help</code>
           </li>
         </ul>
-        <p className="hint">Astuce : la lampe du bureau s&apos;allume quand on clique dessus, et le mode sombre éteint la pièce.</p>
+        <p className="hint">Astuce : la lampe du bureau s&apos;allume et s&apos;éteint quand on clique dessus.</p>
       </>
     ),
   },

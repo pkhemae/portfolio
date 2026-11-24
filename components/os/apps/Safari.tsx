@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Glyph, Logo } from "../Icons";
+import { Glyph } from "../Icons";
 import { PROFILE } from "../profile";
 import type { OSApi, PostSummary } from "../types";
 import { Toolbar, ToolButton } from "./shared";
@@ -86,7 +86,7 @@ export default function Safari({ api, payload, nav }: { api: OSApi; payload?: st
 
 function StartPage({ api, go }: { api: OSApi; go: (p: Page) => void }) {
   const favorites = [
-    { label: "Mes projets", onClick: () => go("projets"), tile: <Logo size={26} />, color: "#1D2DFF" },
+    { label: "Mes projets", onClick: () => go("projets"), tile: <span className="text-[19px] font-bold tracking-tight">KP</span>, color: "#1D2DFF" },
     { label: "GitHub", href: PROFILE.github, tile: <Glyph name="github" size={26} />, color: "#1f2328" },
     { label: "LinkedIn", href: PROFILE.linkedin, tile: <Glyph name="linkedin" size={24} />, color: "#0a66c2" },
     { label: "Université", href: PROFILE.university.url, tile: <span className="text-[17px] font-bold">UN</span>, color: "#e2001a" },
@@ -139,7 +139,7 @@ function SiteHeader({ go }: { go: (p: Page) => void }) {
   return (
     <header className="site-header sticky top-0 z-10 flex items-center justify-between px-8 h-14">
       <button type="button" onClick={() => go("start")} className="flex items-center gap-2 font-semibold text-[14px]">
-        <Logo size={18} />
+        <span className="w-6 h-6 rounded-full bg-[#1D2DFF] text-white text-[10px] font-bold grid place-items-center">KP</span>
         {PROFILE.name}
       </button>
       <nav className="flex items-center gap-5 text-[13px] mac-text-2">

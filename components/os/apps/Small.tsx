@@ -134,31 +134,57 @@ export function Activity({ api }: { api: OSApi }) {
 
 export function About({ api }: { api: OSApi }) {
   const rows = [
-    ["Formation", "BUT Informatique · 2e année"],
+    ["Utilisateur", PROFILE.name],
+    ["Formation", "BUT Informatique, 2e année"],
     ["Établissement", PROFILE.university.name],
-    ["Âge", "20 ans"],
-    ["Système", "khémaraOS 2026"],
+    ["Écran", "Studio Display XDR 27 pouces"],
+    ["macOS", "Portfolio 2026"],
   ];
   return (
-    <div className="flex flex-col items-center text-center px-6 pt-4 pb-6 h-full mac-content">
-      <div className="w-[110px] h-[110px] rounded-full grid place-items-center text-white text-[40px] font-semibold tracking-tight about-avatar mb-4">
-        {PROFILE.initials}
-      </div>
-      <h1 className="text-[22px] font-bold tracking-tight">{PROFILE.name}</h1>
-      <p className="text-[12px] mac-text-3 mb-5">Étudiant développeur</p>
-      <dl className="text-[12px] w-full flex flex-col gap-1 mb-6">
+    <div className="flex flex-col items-center text-center px-6 pt-2 pb-5 h-full mac-content">
+      <DisplayArt />
+      <h1 className="text-[22px] font-bold tracking-tight mt-3">Khémara Parc</h1>
+      <p className="text-[12px] mac-text-3 mb-4">Étudiant développeur · 2026</p>
+      <dl className="text-[11.5px] w-full flex flex-col gap-1 mb-5">
         {rows.map(([k, v]) => (
           <div key={k} className="flex gap-3">
-            <dt className="w-1/2 text-right font-semibold">{k}</dt>
-            <dd className="w-1/2 text-left mac-text-2">{v}</dd>
+            <dt className="w-[42%] text-right font-semibold">{k}</dt>
+            <dd className="w-[58%] text-left mac-text-2">{v}</dd>
           </div>
         ))}
       </dl>
       <button type="button" onClick={() => api.openApp("notes", "about")} className="push-btn">
         Plus d&apos;infos…
       </button>
-      <p className="text-[10px] mac-text-3 mt-auto pt-4">™ et © 2026 {PROFILE.name}. Tous droits réservés.</p>
+      <p className="text-[10px] mac-text-3 mt-auto pt-4 leading-snug">
+        © 2026 {PROFILE.name}.
+        <br />
+        Portfolio personnel, non affilié à Apple.
+      </p>
     </div>
   );
 }
 
+/** Small drawing of the display, like the device picture of "About This Mac". */
+function DisplayArt() {
+  return (
+    <svg width="150" height="118" viewBox="0 0 150 118" aria-hidden>
+      <defs>
+        <linearGradient id="about-wall" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#9cc8ff" />
+          <stop offset="0.55" stopColor="#b9a7f2" />
+          <stop offset="1" stopColor="#f2b79b" />
+        </linearGradient>
+        <linearGradient id="about-alu" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#e4e5e8" />
+          <stop offset="1" stopColor="#b9bcc1" />
+        </linearGradient>
+      </defs>
+      <path d="M62 82h26l6 26H56z" fill="url(#about-alu)" />
+      <rect x="44" y="106" width="62" height="5" rx="2.5" fill="url(#about-alu)" />
+      <rect x="4" y="4" width="142" height="82" rx="5" fill="#d3d5d9" />
+      <rect x="6" y="6" width="138" height="78" rx="4" fill="#0b0b0c" />
+      <rect x="9" y="9" width="132" height="72" rx="1.5" fill="url(#about-wall)" />
+    </svg>
+  );
+}

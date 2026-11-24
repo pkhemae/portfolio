@@ -51,13 +51,25 @@ export function createDisplay(): DisplayParts {
 
   const alu = aluminium();
 
-  // Stand: a flat foot and a single angled aluminium arm.
-  const foot = rbox(0.2, 0.007, 0.185, 0.0035, alu, 3);
-  foot.position.set(0, 0.0035, -0.01);
+  // Tilt- and height-adjustable stand (Studio Display XDR): a flat foot,
+  // an upright column at the back and a counterbalanced arm holding the
+  // display.
+  const foot = rbox(0.21, 0.008, 0.205, 0.004, alu, 3);
+  foot.position.set(0, 0.004, -0.02);
   group.add(foot);
-  const armBottom = new THREE.Vector3(0, 0.006, -0.1);
-  const hinge = new THREE.Vector3(0, 0.235, -0.045);
-  group.add(boxBetween(armBottom, hinge, 0.15, 0.011, alu));
+  const columnBottom = new THREE.Vector3(0, 0.006, -0.105);
+  const columnTop = new THREE.Vector3(0, 0.215, -0.118);
+  group.add(boxBetween(columnBottom, columnTop, 0.15, 0.024, alu, 0.006));
+  const hinge = new THREE.Vector3(0, 0.27, -0.045);
+  const arm = boxBetween(columnTop, hinge, 0.13, 0.016, aluminiumDark(), 0.005);
+  group.add(arm);
+  // Pivot caps at both ends of the arm.
+  for (const p of [columnTop, hinge]) {
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.135, 24), aluminiumDark());
+    cap.rotation.z = Math.PI / 2;
+    cap.position.copy(p);
+    group.add(cap);
+  }
 
   // Display head, tilted back a little around the hinge.
   const head = new THREE.Group();
@@ -207,22 +219,84 @@ export function createKeyboard() {
   return shadowed(group);
 }
 
+/**
+ * Mouse shell in the style of the Magic Mouse: a squarish oval outline, a very
+ * low arched top whose highest point sits slightly towards the back, and a
+ * short rounded rim, on a thin aluminium base.
+ */
+function mouseShellGeometry() {
+  const a = 0.0285; // half width
+  const b = 0.0567; // half length
+  const n = 2.7; // superellipse exponent (squarish oval)
+  const H = 0.0185; // shell height above its base
+  const rim = 0.0028;
+  const segments = 72;
+  const rings = 22;
+
+  const outline = (theta: number, t: number) => {
+    const c = Math.cos(theta);
+    const s = Math.sin(theta);
+    return {
+      x: a * t * Math.sign(c) * Math.pow(Math.abs(c), 2 / n),
+      z: b * t * Math.sign(s) * Math.pow(Math.abs(s), 2 / n),
+    };
+  };
+
+  const positions: number[] = [];
+  const indices: number[] = [];
+  const cols = segments + 1;
+  // Top surface rings, then one extra ring at the bottom of the rim.
+  for (let r = 0; r <= rings + 1; r++) {
+    const t = Math.min(1, r / rings);
+    for (let i = 0; i <= segments; i++) {
+      const theta = (i / segments) * Math.PI * 2;
+      const { x, z } = outline(theta, t);
+      let y: number;
+      if (r <= rings) {
+        const dome = Math.pow(1 - Math.pow(t, 2.4), 1 / 2.4);
+        const along = 1 - 0.28 * Math.pow(z / b + 0.18, 2);
+        y = rim + (H - rim) * dome * along;
+      } else {
+        y = 0;
+      }
+      positions.push(x, y, z);
+    }
+  }
+  for (let r = 0; r < rings + 1; r++) {
+    for (let i = 0; i < segments; i++) {
+      const p = r * cols + i;
+      indices.push(p, p + cols, p + 1, p + 1, p + cols, p + cols + 1);
+    }
+  }
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geom.setIndex(indices);
+  geom.computeVertexNormals();
+  return { geom, outline };
+}
+
 export function createMouse() {
   const group = new THREE.Group();
   group.position.set(0.3, DESK_TOP + 0.003, 0.17);
-  group.rotation.y = -0.12;
+  group.rotation.y = -0.1;
 
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 48), aluminium());
-  base.scale.set(0.0272, 0.0022, 0.0545);
-  base.position.y = 0.0011;
+  const { geom, outline } = mouseShellGeometry();
+
+  // Aluminium base: same outline, slightly inset, very thin.
+  const shape = new THREE.Shape();
+  for (let i = 0; i <= 72; i++) {
+    const { x, z } = outline((i / 72) * Math.PI * 2, 0.94);
+    if (i === 0) shape.moveTo(x, z);
+    else shape.lineTo(x, z);
+  }
+  const baseGeom = new THREE.ExtrudeGeometry(shape, { depth: 0.0024, bevelEnabled: false, curveSegments: 1 });
+  baseGeom.rotateX(Math.PI / 2);
+  baseGeom.translate(0, 0.0024, 0);
+  const base = new THREE.Mesh(baseGeom, aluminium());
   group.add(base);
 
-  const shell = new THREE.Mesh(
-    new THREE.SphereGeometry(1, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2),
-    std("#fbfbfc", 0.22, 0, { envMapIntensity: 1.2 }),
-  );
-  shell.scale.set(0.0285, 0.0118, 0.0567);
-  shell.position.y = 0.0022;
+  const shell = new THREE.Mesh(geom, std("#fbfbfc", 0.2, 0, { envMapIntensity: 1.1, side: THREE.DoubleSide }));
+  shell.position.y = 0.0024;
   group.add(shell);
   return shadowed(group);
 }

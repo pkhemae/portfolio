@@ -19,7 +19,7 @@ export default async function Post({ params }: { params: Promise<{ slug: string 
                     khémaraOS
                 </Link>
                 <span className="hidden sm:block truncate px-4">~/projets/{slug}.md</span>
-                <Link href="/" className="hud-btn !text-neutral-500 hover:!text-white">[← retour au bureau]</Link>
+                <Link href="/" className="px-1.5 py-0.5 rounded-sm text-neutral-500 hover:bg-[#1D2DFF] hover:text-white transition-colors">[← retour au bureau]</Link>
             </div>
 
             <main className="max-w-5xl mx-auto px-6 pt-16 pb-24">
