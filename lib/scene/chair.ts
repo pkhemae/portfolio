@@ -17,15 +17,42 @@ function rounded(w: number, h: number, d: number, r: number, mat: THREE.Material
 }
 
 /**
- * Rounded slab bent around a vertical axis (concave towards -Z, the sitter),
- * like the shell of a chair back.
+ * Slab bent around a vertical axis (concave towards -Z, the sitter), like the
+ * shell of a chair back: a rounded rectangle (corner radius `r` in its plane)
+ * extruded to thickness `d`, centred on its origin.
  */
 function bentSlab(w: number, h: number, d: number, r: number, bend: number, mat: THREE.Material) {
-  const geom = new RoundedBoxGeometry(w, h, d, 5, r);
+  const x = w / 2;
+  const y = h / 2;
+  const rr = Math.min(r, x, y);
+  const shape = new THREE.Shape();
+  // Intermediate points along the top and bottom edges give the flat faces
+  // vertices across the width, so they can actually follow the bend.
+  const steps = Math.max(2, Math.round((w - 2 * rr) / 0.01));
+  shape.moveTo(-x + rr, -y);
+  for (let i = 1; i <= steps; i++) shape.lineTo(-x + rr + ((w - 2 * rr) * i) / steps, -y);
+  shape.quadraticCurveTo(x, -y, x, -y + rr);
+  shape.lineTo(x, y - rr);
+  shape.quadraticCurveTo(x, y, x - rr, y);
+  for (let i = 1; i <= steps; i++) shape.lineTo(x - rr - ((w - 2 * rr) * i) / steps, y);
+  shape.quadraticCurveTo(-x, y, -x, y - rr);
+  shape.lineTo(-x, -y + rr);
+  shape.quadraticCurveTo(-x, -y, -x + rr, -y);
+  const bevel = Math.min(0.004, d / 4);
+  const geom = new THREE.ExtrudeGeometry(shape, {
+    depth: d - bevel * 2,
+    bevelEnabled: true,
+    bevelThickness: bevel,
+    bevelSize: bevel,
+    bevelSegments: 2,
+    curveSegments: 8,
+    steps: 1,
+  });
+  geom.translate(0, 0, -(d - bevel * 2) / 2);
   const pos = geom.attributes.position as THREE.BufferAttribute;
   for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i);
-    pos.setZ(i, pos.getZ(i) - (x * x) / (2 * bend));
+    const px = pos.getX(i);
+    pos.setZ(i, pos.getZ(i) - (px * px) / (2 * bend));
   }
   geom.computeVertexNormals();
   const mesh = new THREE.Mesh(geom, mat);
@@ -104,48 +131,48 @@ export function createChair() {
   }
 
   // --- Backrest ------------------------------------------------------------
-  // L-shaped support: a bar from the mechanism under the seat to the back,
-  // then an upright that is fixed to the back of the shell.
-  const backY = 0.76;
-  const backZ = 0.31;
-  const tilt = 0.14;
-  // Point on the back face of the shell, `ly` below its centre (local coords).
-  const onShellBack = (ly: number) =>
-    new THREE.Vector3(0, backY + ly * Math.cos(tilt), backZ + ly * Math.sin(tilt) + 0.018 * Math.cos(tilt));
+  const back = new THREE.Group();
+  back.position.set(0, 0.76, 0.31);
+  back.rotation.x = 0.14; // reclined a little
+  chair.add(back);
+  back.updateMatrix();
+  /** A point given in the backrest's own frame, expressed in the chair's frame. */
+  const fromBack = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z).applyMatrix4(back.matrix);
+
+  // Shell (frame) with the mesh panel set into it, and a lumbar band.
+  // Flat panels: everything stays perfectly flush (a bend left the faces behind).
+  const BEND = Infinity;
+  const shell = bentSlab(0.46, 0.48, 0.03, 0.06, BEND, std("#19191c", 0.5, 0.25));
+  back.add(shell);
+  const meshPanel = bentSlab(0.42, 0.44, 0.012, 0.05, BEND, std("#2c2d31", 0.92));
+  meshPanel.position.z = -0.012;
+  back.add(meshPanel);
+  const lumbar = bentSlab(0.38, 0.06, 0.012, 0.02, BEND, std("#3b3c41", 0.85));
+  lumbar.position.set(0, -0.12, -0.02);
+  back.add(lumbar);
+
+  // Mounting plate on the back of the shell (lower half).
+  const plate = bentSlab(0.17, 0.26, 0.014, 0.02, BEND, black);
+  plate.position.set(0, -0.1, 0.015 + 0.007);
+  back.add(plate);
+
+  // L-shaped support: from the mechanism under the seat to the back, then
+  // up into the mounting plate.
   const bar = (a: THREE.Vector3, b: THREE.Vector3, w: number, t: number) => {
     const m = rounded(w, a.distanceTo(b), t, 0.01, black, 2);
     m.position.copy(a).add(b).multiplyScalar(0.5);
     m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
     return m;
   };
+  const upperEnd = fromBack(0, -0.02, 0.015 + 0.014 + 0.012); // against the plate
+  const lowerEnd = fromBack(0, -0.22, 0.015 + 0.014 + 0.012);
+  const corner = new THREE.Vector3(0, 0.405, lowerEnd.z + (0.405 - lowerEnd.y) * Math.tan(0.14));
   const under = new THREE.Vector3(0, 0.405, 0.0);
-  const corner = new THREE.Vector3(0, 0.405, 0.3);
-  const top = onShellBack(-0.05);
   chair.add(bar(under, corner, 0.07, 0.03));
-  chair.add(bar(corner, top, 0.07, 0.03));
-  // Rounded joint at the corner and a fixing plate on the shell.
+  chair.add(bar(corner, upperEnd, 0.07, 0.026));
   const joint = new THREE.Mesh(new THREE.SphereGeometry(0.022, 16, 12), black);
   joint.position.copy(corner);
   chair.add(joint);
-  const plate = rounded(0.12, 0.1, 0.012, 0.01, black, 2);
-  plate.position.copy(onShellBack(-0.04));
-  plate.rotation.x = tilt;
-  chair.add(plate);
-
-  const back = new THREE.Group();
-  back.position.set(0, backY, backZ);
-  back.rotation.x = tilt; // reclined a little
-  chair.add(back);
-
-  // Shell (frame) with the mesh panel set into it, and a lumbar band.
-  const shell = bentSlab(0.46, 0.48, 0.03, 0.06, 0.55, std("#19191c", 0.5, 0.25));
-  back.add(shell);
-  const meshPanel = bentSlab(0.42, 0.44, 0.012, 0.05, 0.55, std("#2c2d31", 0.92));
-  meshPanel.position.z = -0.012;
-  back.add(meshPanel);
-  const lumbar = bentSlab(0.38, 0.06, 0.012, 0.02, 0.55, std("#3b3c41", 0.85));
-  lumbar.position.set(0, -0.12, -0.02);
-  back.add(lumbar);
 
   shadowed(chair);
 
