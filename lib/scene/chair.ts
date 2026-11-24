@@ -104,15 +104,37 @@ export function createChair() {
   }
 
   // --- Backrest ------------------------------------------------------------
-  // Spine from the mechanism up to the back.
-  const spine = rounded(0.07, 0.3, 0.03, 0.012, black, 2);
-  spine.position.set(0, 0.56, 0.3);
-  spine.rotation.x = 0.16;
-  chair.add(spine);
+  // L-shaped support: a bar from the mechanism under the seat to the back,
+  // then an upright that is fixed to the back of the shell.
+  const backY = 0.76;
+  const backZ = 0.31;
+  const tilt = 0.14;
+  // Point on the back face of the shell, `ly` below its centre (local coords).
+  const onShellBack = (ly: number) =>
+    new THREE.Vector3(0, backY + ly * Math.cos(tilt), backZ + ly * Math.sin(tilt) + 0.018 * Math.cos(tilt));
+  const bar = (a: THREE.Vector3, b: THREE.Vector3, w: number, t: number) => {
+    const m = rounded(w, a.distanceTo(b), t, 0.01, black, 2);
+    m.position.copy(a).add(b).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+    return m;
+  };
+  const under = new THREE.Vector3(0, 0.405, 0.0);
+  const corner = new THREE.Vector3(0, 0.405, 0.3);
+  const top = onShellBack(-0.05);
+  chair.add(bar(under, corner, 0.07, 0.03));
+  chair.add(bar(corner, top, 0.07, 0.03));
+  // Rounded joint at the corner and a fixing plate on the shell.
+  const joint = new THREE.Mesh(new THREE.SphereGeometry(0.022, 16, 12), black);
+  joint.position.copy(corner);
+  chair.add(joint);
+  const plate = rounded(0.12, 0.1, 0.012, 0.01, black, 2);
+  plate.position.copy(onShellBack(-0.04));
+  plate.rotation.x = tilt;
+  chair.add(plate);
 
   const back = new THREE.Group();
-  back.position.set(0, 0.76, 0.31);
-  back.rotation.x = 0.14; // reclined a little
+  back.position.set(0, backY, backZ);
+  back.rotation.x = tilt; // reclined a little
   chair.add(back);
 
   // Shell (frame) with the mesh panel set into it, and a lumbar band.
