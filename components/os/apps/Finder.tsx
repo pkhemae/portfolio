@@ -12,7 +12,8 @@ interface Item {
   key: string;
   name: string;
   kind: string;
-  icon: React.ReactNode;
+  /** Icon drawn at the requested size (grid: 64, list: 20). */
+  icon: (size: number) => React.ReactNode;
   open?: () => void;
 }
 
@@ -67,26 +68,26 @@ export default function Finder({ api, payload, nav }: { api: OSApi; payload?: st
           key: p.slug,
           name: p.title.split(":")[0].trim(),
           kind: "Page web",
-          icon: p.thumbnail ? <ThumbIcon src={p.thumbnail} /> : <TextFileIcon label="WEB" />,
+          icon: (s: number) => (p.thumbnail ? <ThumbIcon src={p.thumbnail} size={s} /> : <TextFileIcon label="WEB" size={s} />),
           open: () => api.openApp("safari", `post:${p.slug}`),
         }));
       case "documents":
         return [
-          { key: "cv", name: "CV.pdf", kind: "Document PDF", icon: <ThumbIcon src="/cv.pdf.png" badge="PDF" />, open: () => api.openApp("preview") },
-          { key: "about", name: "À propos.txt", kind: "Note", icon: <TextFileIcon />, open: () => api.openApp("notes", "about") },
-          { key: "skills", name: "Compétences.txt", kind: "Note", icon: <TextFileIcon />, open: () => api.openApp("notes", "skills") },
-          { key: "projets", name: "Projets", kind: "Dossier", icon: <FolderIcon />, open: () => go("projets") },
+          { key: "cv", name: "CV.pdf", kind: "Document PDF", icon: (s: number) => <ThumbIcon src="/cv.pdf.png" badge="PDF" size={s} />, open: () => api.openApp("preview") },
+          { key: "about", name: "À propos.txt", kind: "Note", icon: (s: number) => <TextFileIcon size={s} />, open: () => api.openApp("notes", "about") },
+          { key: "skills", name: "Compétences.txt", kind: "Note", icon: (s: number) => <TextFileIcon size={s} />, open: () => api.openApp("notes", "skills") },
+          { key: "projets", name: "Projets", kind: "Dossier", icon: (s: number) => <FolderIcon size={s} />, open: () => go("projets") },
         ];
       case "applications":
-        return DOCK.map((id) => ({ key: id, name: APPS[id].name, kind: "Application", icon: <AppIcon app={id} size={60} />, open: () => api.openApp(id) }));
+        return DOCK.map((id) => ({ key: id, name: APPS[id].name, kind: "Application", icon: (s: number) => <AppIcon app={id} size={s} />, open: () => api.openApp(id) }));
       case "bureau":
         return [
-          { key: "projets", name: "Projets", kind: "Dossier", icon: <FolderIcon />, open: () => go("projets") },
-          { key: "cv", name: "CV.pdf", kind: "Document PDF", icon: <ThumbIcon src="/cv.pdf.png" badge="PDF" />, open: () => api.openApp("preview") },
-          { key: "about", name: "À propos.txt", kind: "Note", icon: <TextFileIcon />, open: () => api.openApp("notes", "about") },
+          { key: "projets", name: "Projets", kind: "Dossier", icon: (s: number) => <FolderIcon size={s} />, open: () => go("projets") },
+          { key: "cv", name: "CV.pdf", kind: "Document PDF", icon: (s: number) => <ThumbIcon src="/cv.pdf.png" badge="PDF" size={s} />, open: () => api.openApp("preview") },
+          { key: "about", name: "À propos.txt", kind: "Note", icon: (s: number) => <TextFileIcon size={s} />, open: () => api.openApp("notes", "about") },
         ];
       case "corbeille":
-        return [{ key: "old", name: "ancien-portfolio.zip", kind: "Archive ZIP", icon: <TextFileIcon label="ZIP" /> }];
+        return [{ key: "old", name: "ancien-portfolio.zip", kind: "Archive ZIP", icon: (s: number) => <TextFileIcon label="ZIP" size={s} /> }];
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location, api.posts]);
@@ -162,7 +163,7 @@ export default function Finder({ api, payload, nav }: { api: OSApi; payload?: st
                   onDoubleClick={() => item.open?.()}
                   className={`finder-item flex flex-col items-center gap-1 p-1.5 rounded-[8px] ${selected === item.key ? "is-selected" : ""}`}
                 >
-                  <span className="finder-icon grid place-items-center w-[72px] h-[64px] rounded-[6px]">{item.icon}</span>
+                  <span className="finder-icon grid place-items-center w-[72px] h-[64px] rounded-[6px]">{item.icon(64)}</span>
                   <span className="finder-label text-[12px] leading-tight text-center px-1.5 py-[1px] rounded-[4px] line-clamp-2 max-w-[108px]">{item.name}</span>
                 </button>
               ))}
@@ -184,7 +185,7 @@ export default function Finder({ api, payload, nav }: { api: OSApi; payload?: st
                     className={`list-row ${selected === item.key ? "is-selected" : i % 2 ? "list-row--alt" : ""}`}
                   >
                     <td className="py-1 pl-5 flex items-center gap-2">
-                      <span className="inline-grid place-items-center w-5 h-5 overflow-hidden [&_svg]:w-5 [&_svg]:h-5 [&_img]:max-h-5">{item.icon}</span>
+                      <span className="inline-grid place-items-center w-5 h-5">{item.icon(20)}</span>
                       {item.name}
                     </td>
                     <td className="py-1 mac-text-2">{item.kind}</td>
