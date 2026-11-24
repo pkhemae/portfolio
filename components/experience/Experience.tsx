@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import OS from "../os/OS";
 import type { PostSummary } from "../os/types";
 import type { DeskScene, SceneMode } from "@/lib/scene/DeskScene";
-import { SCREEN } from "@/lib/scene/objects";
+import { osResolution } from "@/lib/scene/screen";
 import Loader from "./Loader";
 
 interface ExperienceProps {
@@ -37,6 +37,11 @@ export default function Experience({ posts }: ExperienceProps) {
   const startedRef = useRef(false);
   const vp = useViewport();
   const compact = vp.w < 820 || vp.h < 520;
+  // OS resolution follows the size of the display once zoomed in.
+  const osRes = osResolution(vp.w, vp.h);
+  useEffect(() => {
+    sceneRef.current?.setResolution(osRes.width, osRes.height);
+  }, [osRes.width, osRes.height, webgl]);
 
   // Phone layout: open the full-screen OS once the camera reached the screen.
   useEffect(() => {
@@ -144,7 +149,7 @@ export default function Experience({ posts }: ExperienceProps) {
 
       {screenEl &&
         createPortal(
-          <OS posts={posts} width={SCREEN.pxWidth} height={SCREEN.pxHeight} powered={powered} onLeave={compact ? undefined : leave} onToggleLamp={toggleLamp} />,
+          <OS posts={posts} width={osRes.width} height={osRes.height} powered={powered} onLeave={compact ? undefined : leave} onToggleLamp={toggleLamp} />,
           screenEl,
         )}
 

@@ -130,6 +130,23 @@ export default function OS({ posts, compact = false, width, height, powered, dar
     [width, height],
   );
 
+  // Resolution changed (browser resized): keep every window inside the screen.
+  useEffect(() => {
+    setWindows((ws) =>
+      ws.map((win) => {
+        const w = Math.min(win.w, width - 40);
+        const h = Math.min(win.h, height - MENU_H - DOCK_SPACE - 20);
+        return {
+          ...win,
+          w,
+          h,
+          x: Math.max(16, Math.min(win.x, width - w - 16)),
+          y: Math.max(MENU_H + 8, Math.min(win.y, height - h - DOCK_SPACE)),
+        };
+      }),
+    );
+  }, [width, height]);
+
   const close = (id: AppId) => setWindows((ws) => ws.filter((w) => w.id !== id));
   const patch = (id: AppId, p: Partial<WindowState>) => setWindows((ws) => ws.map((w) => (w.id === id ? { ...w, ...p } : w)));
 

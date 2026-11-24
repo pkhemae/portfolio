@@ -2,7 +2,8 @@ import * as THREE from "three";
 import { CSS3DObject, CSS3DRenderer } from "three/examples/jsm/renderers/CSS3DRenderer.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { SCREEN, createDesk, createGround, createMug, createNotebook, createPlant } from "./objects";
+import { createDesk, createGround, createMug, createNotebook, createPlant } from "./objects";
+import { SCREEN, screenMargin } from "./screen";
 import { createBooks } from "./books";
 import { createLooseSheets, createWasteBasket } from "./clutter";
 import { createChair } from "./chair";
@@ -236,16 +237,13 @@ export class DeskScene {
 
     // --- CSS3D screen ----------------------------------------------------
     const el = opts.screenElement;
-    el.style.width = `${SCREEN.pxWidth}px`;
-    el.style.height = `${SCREEN.pxHeight}px`;
     // Seen from behind the desk, the screen must not show through mirrored.
     el.style.backfaceVisibility = "hidden";
     this.cssObject = new CSS3DObject(el);
     this.cssObject.position.copy(this.monitor.screenCenter).multiplyScalar(CSS_SCALE);
     this.cssObject.quaternion.copy(this.monitor.screenPlane.getWorldQuaternion(new THREE.Quaternion()));
-    const s = (SCREEN.width / SCREEN.pxWidth) * CSS_SCALE;
-    this.cssObject.scale.set(s, s, s);
     this.cssScene.add(this.cssObject);
+    this.setResolution(SCREEN.pxWidth, SCREEN.pxHeight);
     this.setScreenInteractive(false);
 
     // --- Events ----------------------------------------------------------
@@ -298,6 +296,19 @@ export class DeskScene {
     this.active = active;
     this.settleFrames = 3;
     this.clock.getDelta(); // no big time jump on resume
+  }
+
+  /**
+   * Resolution of the OS shown on the display (CSS pixels). The DOM element
+   * is resized and scaled so it always covers the same physical display.
+   */
+  setResolution(width: number, height: number) {
+    const el = this.opts.screenElement;
+    el.style.width = `${width}px`;
+    el.style.height = `${height}px`;
+    const s = (SCREEN.width / width) * CSS_SCALE;
+    this.cssObject.scale.set(s, s, s);
+    this.settleFrames = 3;
   }
 
   /** Flies back to the default view of the desk. */
@@ -414,7 +425,7 @@ export class DeskScene {
     const aspect = this.camera.aspect;
     const vfov = THREE.MathUtils.degToRad(this.camera.fov);
     // Leave some room around the display so the page breathes.
-    const margin = 1.24;
+    const margin = screenMargin(this.opts.container.clientHeight);
     const dh = ((SCREEN.height * margin) / 2) / Math.tan(vfov / 2);
     const dw = ((SCREEN.width * margin) / 2) / (Math.tan(vfov / 2) * aspect);
     const d = Math.max(dh, dw);
@@ -733,10 +744,13 @@ export class DeskScene {
     this.mug.steamMat.uniforms.uTime.value = t;
     this.mug.steamMat.uniforms.uOpacity.value = 0.5 * this.steamK * (1 - this.nightK * 0.4);
     this.mug.steam.visible = this.steamK > 0.01;
-    this.mug.steam.quaternion.copy(this.camera.quaternion);
 
 
     this.applyCamera();
+    // Steam rises straight up: the plane only turns around the vertical axis
+    // to face the camera (a full billboard would tilt with the view).
+    this.mug.steam.getWorldPosition(this.tmpRight);
+    this.mug.steam.rotation.set(0, Math.atan2(this.camera.position.x - this.tmpRight.x, this.camera.position.z - this.tmpRight.z), 0);
     // Hover only needs a raycast when the pointer moved (or now and then, as
     // the camera drifts slightly with the parallax).
     if (this.pointerMoved || this.frame % 6 === 0) {

@@ -17,12 +17,7 @@ export const DESK_TOP = 0.76;
 export const ACCENT = "#1D2DFF";
 
 /** Screen size (16:10) in world units and its virtual size in CSS pixels. */
-export const SCREEN = {
-  width: 0.597,
-  height: 0.336,
-  pxWidth: 1440,
-  pxHeight: 810,
-};
+export { SCREEN } from "./screen";
 
 export const std = (color: THREE.ColorRepresentation, roughness = 0.6, metalness = 0, extra: THREE.MeshStandardMaterialParameters = {}) =>
   new THREE.MeshStandardMaterial({ color, roughness, metalness, ...extra });
