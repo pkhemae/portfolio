@@ -9,7 +9,7 @@ Inspired by the concept of [Henry Heffernan's portfolio](https://github.com/henr
 ## 🚀 Features
 
 - **Bureau en 3D (Three.js)** : un bureau modélisé entièrement en code (aucun modèle à télécharger) avec ordinateur, lampe, plante, tasse de café, livres… Ombres douces, éclairage d'environnement et légère parallaxe à la souris.
-- **Caméra libre** : on tourne autour du bureau (glisser) et on zoome / dézoome (molette ou pincement), dans des limites qui empêchent de passer sous le bureau ou de trop s'éloigner. `[recentrer]` ramène à la vue de départ, et en sortant de l'écran on retrouve l'angle où l'on était.
+- **Caméra libre** : on tourne à 360° autour du bureau (glisser) et on zoome / dézoome (molette ou pincement), le bureau restant toujours au centre de l'écran et sans jamais pouvoir passer sous le sol. `[recentrer]` ramène à la vue de départ, et en sortant de l'écran on retrouve l'angle où l'on était.
 - **Un vrai ordinateur à fouiller** : en cliquant sur l'écran, la caméra zoome et l'on interagit avec *khémaraOS*, un petit système d'exploitation en React rendu directement sur l'écran via `CSS3DRenderer` (fenêtres déplaçables et redimensionnables, dock, menu, horloge).
 - **Applications** : À propos, Projets (articles Markdown), CV, Compétences, Activité GitHub, Contact et un Terminal (`help`, `ls`, `cat`, `open`, `lampe`…).
 - **Mode nuit** : cliquer sur la lampe (ou `[nuit]`, ou `lampe` dans le terminal) éteint la pièce et allume la lampe.

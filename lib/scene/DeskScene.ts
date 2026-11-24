@@ -36,16 +36,13 @@ export interface DeskSceneOptions {
 
 /** Bounds of the free camera around the desk. */
 const ORBIT = {
-  minDistance: 0.55,
-  maxDistance: 3.4,
+  minDistance: 0.75,
+  maxDistance: 9,
   /** Never look from below the desk top: the floor stays out of reach. */
   minPolar: 0.3,
   maxPolar: 1.62,
-  /** Horizontal half-range (radians) around the front of the desk. */
-  azimuth: 1.75,
-  /** The orbit target can wander a little (zoom to cursor), within this box. */
-  targetMin: new THREE.Vector3(-0.8, 0.78, -0.45),
-  targetMax: new THREE.Vector3(0.8, 1.25, 0.4),
+  /** The camera always orbits around the middle of the desk, which stays centered. */
+  target: new THREE.Vector3(0, 0.93, -0.1),
   /** Lowest camera height (floor is y = 0). */
   minHeight: 0.3,
 };
@@ -229,6 +226,8 @@ export class DeskScene {
     const el = opts.screenElement;
     el.style.width = `${SCREEN.pxWidth}px`;
     el.style.height = `${SCREEN.pxHeight}px`;
+    // Seen from behind the desk, the screen must not show through mirrored.
+    el.style.backfaceVisibility = "hidden";
     this.cssObject = new CSS3DObject(el);
     this.cssObject.position.copy(this.monitor.screenCenter).multiplyScalar(CSS_SCALE);
     this.cssObject.quaternion.copy(this.monitor.screenPlane.getWorldQuaternion(new THREE.Quaternion()));
@@ -361,7 +360,7 @@ export class DeskScene {
     const f = this.distanceFactor();
     return {
       position: new THREE.Vector3(0, 1.36 + 0.12 * (f - 1), 1.78 * f),
-      target: new THREE.Vector3(0, 0.93, -0.1),
+      target: ORBIT.target.clone(),
     };
   }
 
@@ -385,14 +384,13 @@ export class DeskScene {
     controls.enableDamping = true;
     controls.dampingFactor = 0.07;
     controls.enablePan = false;
-    controls.zoomToCursor = true;
+    // Zoom stays on the desk center so the desk never drifts off-screen.
+    controls.zoomToCursor = false;
     controls.rotateSpeed = 0.55;
-    controls.zoomSpeed = 0.9;
+    controls.zoomSpeed = 1.1;
     controls.minDistance = ORBIT.minDistance;
     controls.minPolarAngle = ORBIT.minPolar;
     controls.maxPolarAngle = ORBIT.maxPolar;
-    controls.minAzimuthAngle = -ORBIT.azimuth;
-    controls.maxAzimuthAngle = ORBIT.azimuth;
     controls.addEventListener("start", () => {
       this.dragging = true;
       container.style.cursor = "grabbing";
@@ -410,7 +408,7 @@ export class DeskScene {
   /** Hands the camera over to OrbitControls, starting from `key`. */
   private enableControls(key: CameraKey) {
     this.rig.position.copy(key.position);
-    this.controls.target.copy(key.target);
+    this.controls.target.copy(ORBIT.target);
     this.controls.maxDistance = ORBIT.maxDistance * this.distanceFactor();
     this.controls.update();
     this.controls.enabled = true;
@@ -421,14 +419,18 @@ export class DeskScene {
   private updateControls() {
     if (!this.controls.enabled || this.camTween) return;
     this.controls.update();
-    // Keep the orbit target near the desk and the camera above the floor.
-    this.controls.target.clamp(ORBIT.targetMin, ORBIT.targetMax);
+    // Zoomed out, aim at the middle of the whole desk (legs included) rather
+    // than at the desk top, so it stays centered on screen.
+    const dist = this.rig.position.distanceTo(this.controls.target);
+    const far = THREE.MathUtils.smoothstep(dist, 1.8, 6);
+    this.controls.target.set(ORBIT.target.x, THREE.MathUtils.lerp(ORBIT.target.y, 0.5, far), ORBIT.target.z);
+    // Keep the camera above the floor.
     if (this.rig.position.y < ORBIT.minHeight) this.rig.position.y = ORBIT.minHeight;
     this.camPos.copy(this.rig.position);
     this.camTarget.copy(this.controls.target);
 
     const home = this.deskKey();
-    const moved = this.camPos.distanceTo(home.position) > 0.05 || this.camTarget.distanceTo(home.target) > 0.05;
+    const moved = this.camPos.distanceTo(home.position) > 0.05;
     if (moved !== this.viewMoved) {
       this.viewMoved = moved;
       this.opts.onViewChange?.(moved);
@@ -459,7 +461,7 @@ export class DeskScene {
     this.camera.lookAt(this.camTarget);
     if (this.mode === "desk") {
       // Subtle parallax along the camera's own axes, scaled by distance.
-      const k = this.camPos.distanceTo(this.camTarget) * 0.04;
+      const k = Math.min(0.1, this.camPos.distanceTo(this.camTarget) * 0.04);
       this.camera.updateMatrix();
       const right = new THREE.Vector3().setFromMatrixColumn(this.camera.matrix, 0);
       const up = new THREE.Vector3().setFromMatrixColumn(this.camera.matrix, 1);
