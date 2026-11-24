@@ -119,6 +119,9 @@ export class DeskScene {
     this.cssRenderer.setSize(width, height);
     Object.assign(this.cssRenderer.domElement.style, { position: "absolute", inset: "0", zIndex: "0" });
     container.appendChild(this.cssRenderer.domElement);
+    // A focused element inside the CSS3D layer can make the browser scroll
+    // this overflow:hidden container, which would misalign the screen.
+    this.cssRenderer.domElement.addEventListener("scroll", this.resetCssScroll);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -281,6 +284,8 @@ export class DeskScene {
         });
       }
     });
+    this.cssRenderer.domElement.removeEventListener("scroll", this.resetCssScroll);
+    this.scene.environment?.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove();
     this.cssRenderer.domElement.remove();
@@ -384,7 +389,10 @@ export class DeskScene {
   }
 
   private setScreenInteractive(on: boolean) {
-    this.opts.screenElement.style.pointerEvents = on ? "auto" : "none";
+    const el = this.opts.screenElement;
+    el.style.pointerEvents = on ? "auto" : "none";
+    // Keep keyboard focus out of the screen while it is only decorative.
+    el.inert = !on;
   }
 
   private applyNight() {
@@ -402,6 +410,12 @@ export class DeskScene {
     this.screenLight.intensity = lerp(DAY.screenLight, NIGHT.screenLight);
     this.opts.container.style.setProperty("--scene-bg", `#${(this.scene.background as THREE.Color).getHexString()}`);
   }
+
+  private resetCssScroll = () => {
+    const el = this.cssRenderer.domElement;
+    el.scrollTop = 0;
+    el.scrollLeft = 0;
+  };
 
   private onResize = () => {
     const { container } = this.opts;

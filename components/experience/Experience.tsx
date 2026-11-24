@@ -46,8 +46,17 @@ export default function Experience({ posts }: ExperienceProps) {
   const [mobileOS, setMobileOS] = useState(false);
   const vp = useViewport();
   const compact = vp.w < 820 || vp.h < 520;
-  const compactRef = useRef(compact);
-  compactRef.current = compact;
+  const [loaderGone, setLoaderGone] = useState(false);
+
+  // Phone layout: open the full-screen OS once the camera reached the screen.
+  useEffect(() => {
+    if (!(compact && mode === "screen")) {
+      setMobileOS(false);
+      return;
+    }
+    const id = setTimeout(() => setMobileOS(true), 650);
+    return () => clearTimeout(id);
+  }, [compact, mode]);
 
   useEffect(() => sound.subscribe(setMuted), []);
 
@@ -72,13 +81,7 @@ export default function Experience({ posts }: ExperienceProps) {
         container: containerRef.current,
         screenElement: el,
         reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-        onModeChange: (m) => {
-          setMode(m);
-          if (m !== "screen") setMobileOS(false);
-          if (m === "screen" && compactRef.current) {
-            setTimeout(() => setMobileOS(true), 650);
-          }
-        },
+        onModeChange: setMode,
         onHover: setHover,
         onNightChange: setNight,
         onInteract: () => sound.click(),
@@ -99,12 +102,12 @@ export default function Experience({ posts }: ExperienceProps) {
     sound.unlock();
     sound.startAmbient();
     setStarted(true);
+    setTimeout(() => setLoaderGone(true), 800);
     sceneRef.current?.start();
     setTimeout(() => setPowered(true), webgl === false ? 0 : 1400);
   }, [webgl]);
 
   const leave = useCallback(() => {
-    setMobileOS(false);
     sceneRef.current?.leaveScreen();
   }, []);
 
@@ -118,7 +121,7 @@ export default function Experience({ posts }: ExperienceProps) {
     return (
       <main className="fixed inset-0 bg-[#ece7de]">
         <OS posts={posts} width={vp.w} height={vp.h} compact={compact} powered={started} />
-        {!started && <Loader ready onStart={start} note="Votre navigateur ne supporte pas WebGL : version 2D." />}
+        {!loaderGone && <Loader ready onStart={start} note="Votre navigateur ne supporte pas WebGL : version 2D." />}
       </main>
     );
   }
@@ -148,8 +151,9 @@ export default function Experience({ posts }: ExperienceProps) {
         )}
 
       {/* Phone layout: the computer opens full screen once the camera reached it. */}
-      {compact && mode === "screen" && (
-        <div className={`fixed inset-0 z-30 transition-opacity duration-500 ${mobileOS ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+      {/* Stays mounted so the OS keeps its windows between visits. */}
+      {compact && (
+        <div inert={!mobileOS} className={`fixed inset-0 z-30 transition-opacity duration-500 ${mobileOS ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
           <OS posts={posts} width={vp.w} height={vp.h} compact powered onLeave={leave} onToggleNight={toggleNight} />
         </div>
       )}
@@ -175,7 +179,7 @@ export default function Experience({ posts }: ExperienceProps) {
         </p>
       </div>
 
-      {!started && <Loader ready={ready} onStart={start} />}
+      {!loaderGone && <Loader ready={ready} onStart={start} />}
     </main>
   );
 }
