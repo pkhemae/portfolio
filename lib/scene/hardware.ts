@@ -74,6 +74,14 @@ function slab(w: number, h: number, d: number, r: number, mat: THREE.Material) {
 /* Display                                                                   */
 /* ------------------------------------------------------------------------ */
 
+/**
+ * The hole punched in the WebGL canvas is slightly smaller than the DOM
+ * screen behind it: its anti-aliased edge then always falls on the OS itself,
+ * never on the page background (which showed as a thin light outline). The
+ * black bezel covers the few hidden pixels.
+ */
+const SCREEN_INSET = 0.0006;
+
 export interface DisplayParts {
   group: THREE.Group;
   /** Plane exactly covering the visible display area (CSS3D hole + raycasting). */
@@ -140,7 +148,7 @@ export function createDisplay(): DisplayParts {
   head.add(cam);
 
   const screenPlane = new THREE.Mesh(
-    new THREE.PlaneGeometry(SCREEN.width, SCREEN.height),
+    new THREE.PlaneGeometry(SCREEN.width - SCREEN_INSET * 2, SCREEN.height - SCREEN_INSET * 2),
     // Punches a transparent hole in the WebGL canvas so the DOM (CSS3D) OS
     // underneath shows through, while staying depth-occluded.
     new THREE.MeshBasicMaterial({ color: 0x000000, opacity: 0, transparent: true, blending: THREE.NoBlending, side: THREE.DoubleSide }),
@@ -151,7 +159,7 @@ export function createDisplay(): DisplayParts {
   head.add(screenPlane);
 
   const glass = new THREE.Mesh(
-    new THREE.PlaneGeometry(SCREEN.width, SCREEN.height),
+    new THREE.PlaneGeometry(SCREEN.width - SCREEN_INSET * 2, SCREEN.height - SCREEN_INSET * 2),
     new THREE.MeshBasicMaterial({ map: glassTexture(), transparent: true, opacity: 0.18, depthWrite: false }),
   );
   glass.position.set(0, centerY, front + 0.0026);
@@ -159,7 +167,7 @@ export function createDisplay(): DisplayParts {
   head.add(glass);
 
   const dimmer = new THREE.Mesh(
-    new THREE.PlaneGeometry(SCREEN.width, SCREEN.height),
+    new THREE.PlaneGeometry(SCREEN.width - SCREEN_INSET * 2, SCREEN.height - SCREEN_INSET * 2),
     new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0, depthWrite: false }),
   );
   dimmer.position.set(0, centerY, front + 0.0021);
