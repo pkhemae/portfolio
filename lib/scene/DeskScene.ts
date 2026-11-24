@@ -733,7 +733,10 @@ export class DeskScene {
     this.mug.steamMat.uniforms.uTime.value = t;
     this.mug.steamMat.uniforms.uOpacity.value = 0.5 * this.steamK * (1 - this.nightK * 0.4);
     this.mug.steam.visible = this.steamK > 0.01;
-    this.mug.steam.quaternion.copy(this.camera.quaternion);
+    // Steam rises straight up: the plane only turns around the vertical axis
+    // to face the camera (a full billboard would tilt with the view).
+    this.mug.steam.getWorldPosition(this.tmpRight);
+    this.mug.steam.rotation.set(0, Math.atan2(this.camera.position.x - this.tmpRight.x, this.camera.position.z - this.tmpRight.z), 0);
 
 
     this.applyCamera();
