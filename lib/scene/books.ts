@@ -192,12 +192,15 @@ function buildBook(spec: BookSpec, pages: THREE.Texture) {
   }
 
   // Box face order: +x, -x, +y, -y, +z, -z.
-  const bottom = new THREE.Mesh(new THREE.BoxGeometry(W, board, D), coverMat);
-  bottom.position.y = board / 2;
+  // The boards stop where the spine starts: no two faces ever share a plane
+  // (coplanar faces z-fight and flicker as thin stripes).
+  const boardD = D - board;
+  const bottom = new THREE.Mesh(new THREE.BoxGeometry(W, board, boardD), coverMat);
+  bottom.position.set(0, board / 2, -board / 2);
   book.add(bottom);
 
-  const top = new THREE.Mesh(new THREE.BoxGeometry(W, board, D), [coverMat, coverMat, topMat, coverMat, coverMat, coverMat]);
-  top.position.y = T - board / 2;
+  const top = new THREE.Mesh(new THREE.BoxGeometry(W, board, boardD), [coverMat, coverMat, topMat, coverMat, coverMat, coverMat]);
+  top.position.set(0, T - board / 2, -board / 2);
   book.add(top);
 
   const spine = new THREE.Mesh(new THREE.BoxGeometry(W, T, board), [coverMat, coverMat, coverMat, coverMat, spineMat, coverMat]);
@@ -231,7 +234,7 @@ export function createBooks() {
     book.position.y = y;
     book.rotation.y = [0.04, -0.09, 0.07, -0.03][i] ?? 0;
     book.position.x = [0, 0.006, -0.004, 0.003][i] ?? 0;
-    y += spec.thickness;
+    y += spec.thickness + 0.0004;
     group.add(book);
   });
   return group;

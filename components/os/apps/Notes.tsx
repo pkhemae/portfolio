@@ -35,7 +35,7 @@ const NOTES: Note[] = [
           Faites comme chez vous, fouillez dans les dossiers.
         </p>
         <h2>Par où commencer</h2>
-        <ul className="checklist">
+        <ul>
           <li>
             <button type="button" onClick={() => api.openApp("safari", "start")}>Parcourir mes projets</button> dans Safari
           </li>

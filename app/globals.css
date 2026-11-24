@@ -182,7 +182,10 @@ button.menubar-item:hover,
   padding-inline: 5px;
 }
 .mac-menu-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
   width: 100%;
   text-align: left;
   padding: 3px 10px;
@@ -392,19 +395,17 @@ button.menubar-item:hover,
 .notes-body a { color: #c99a00; text-decoration: underline; text-underline-offset: 3px; }
 .os-dark .notes-body a { color: #ffd60a; }
 .notes-body ul { padding-left: 4px; margin-bottom: 12px; }
-.notes-body ul li { list-style: none; position: relative; padding-left: 26px; margin: 6px 0; }
+.notes-body ul li { list-style: none; position: relative; padding-left: 22px; margin: 3px 0; }
+/* Apple Notes "dashed list": an en dash hanging in the margin. */
 .notes-body ul li::before {
-  content: "";
+  content: "–";
   position: absolute;
-  left: 2px;
-  top: 0.45em;
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  border: 1.5px solid var(--text-3);
+  left: 4px;
+  top: 0;
+  color: var(--text);
 }
-.notes-body ul.checklist button { color: #c99a00; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
-.os-dark .notes-body ul.checklist button { color: #ffd60a; }
+.notes-body ul button { color: #c99a00; text-decoration: underline; text-underline-offset: 3px; }
+.os-dark .notes-body ul button { color: #ffd60a; }
 .notes-body code { font-size: 13px; padding: 1px 5px; border-radius: 4px; background: var(--control); }
 .notes-body .hint { margin-top: 20px; font-size: 13px; color: var(--text-3); }
 .skill-chip { background: var(--win-2); border: 0.5px solid var(--hairline); }
@@ -449,16 +450,15 @@ button.menubar-item:hover,
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18), inset 0 0 0 0.5px rgba(0, 0, 0, 0.08);
 }
 .os-dark .dock { border-color: rgba(255, 255, 255, 0.16); }
-.dock-item {
-  transition: width 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.dock-icon { transform-origin: 50% 100%; }
-.dock-item .mac-icon { filter: drop-shadow(0 1.5px 2px rgba(0, 0, 0, 0.25)); }
-.dock-item:active .dock-icon { filter: brightness(0.7); }
-.dock-item.is-launching .dock-icon { animation: dock-bounce 0.65s cubic-bezier(0.3, 0, 0.3, 1) 2; }
+.dock-item { display: block; }
+.dock-icon { transform-origin: 50% 100%; will-change: transform; }
+.dock-bounce { display: block; }
+.dock-item .mac-icon { display: block; filter: drop-shadow(0 1.5px 2px rgba(0, 0, 0, 0.25)); }
+.dock-item:active .dock-icon .mac-icon { filter: brightness(0.7) drop-shadow(0 1.5px 2px rgba(0, 0, 0, 0.25)); }
+.dock-item.is-launching .dock-bounce { animation: dock-bounce 0.62s cubic-bezier(0.3, 0, 0.3, 1) 2; }
 @keyframes dock-bounce {
   0%, 100% { transform: translateY(0); }
-  45% { transform: translateY(-34%); }
+  45% { transform: translateY(-38%); }
 }
 .dock-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(0, 0, 0, 0.6); transition: opacity 0.3s ease; }
 .os-dark .dock-dot { background: rgba(255, 255, 255, 0.8); }
@@ -474,11 +474,11 @@ button.menubar-item:hover,
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(20px);
   opacity: 0;
-  transform: translateY(4px);
+  transform: translate(-50%, 4px);
   transition: opacity 0.12s ease, transform 0.12s ease;
   pointer-events: none;
 }
-.dock-tooltip.is-visible { opacity: 1; transform: none; }
+.dock-tooltip.is-visible { opacity: 1; transform: translate(-50%, 0); }
 .dock-tooltip::after {
   content: "";
   position: absolute;
@@ -494,7 +494,7 @@ button.menubar-item:hover,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dock-item.is-launching .dock-icon { animation: none; }
+  .dock-item.is-launching .dock-bounce { animation: none; }
 }
 
 /* Blog prose links (article pages) */

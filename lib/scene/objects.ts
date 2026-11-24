@@ -45,32 +45,80 @@ export function shadowed<T extends THREE.Object3D>(obj: T): T {
 
 /* ------------------------------------------------------------------------ */
 
-export function createGround() {
+/**
+ * Soft shadow of the desk on the floor, pre-drawn on a canvas (blurred desk
+ * top projected along the key light, darker spots under the legs). It stays
+ * soft from every angle, unlike a real-time shadow map, and costs nothing.
+ */
+function deskFloorShadowTexture(lightOffset: { x: number; z: number }) {
+  const size = 1024;
+  const span = 4; // meters covered by the texture
+  const k = size / span;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  const px = (x: number) => (x + span / 2) * k;
+  const pz = (z: number) => (z + span / 2) * k;
+
+  // Wide ambient occlusion under the whole desk.
+  ctx.filter = "blur(70px)";
+  ctx.fillStyle = "rgba(0,0,0,0.45)";
+  ctx.fillRect(px(-0.95), pz(-0.5), 1.9 * k, 1.0 * k);
+
+  // Desk top projected by the key light, with a wide penumbra.
+  ctx.filter = "blur(30px)";
+  ctx.fillStyle = "rgba(0,0,0,0.7)";
+  ctx.fillRect(px(-0.85 + lightOffset.x), pz(-0.4 + lightOffset.z), 1.7 * k, 0.8 * k);
+
+  // Contact shadows where the legs touch the floor.
+  ctx.filter = "blur(6px)";
+  ctx.fillStyle = "rgba(0,0,0,0.9)";
+  for (const [x, z] of [
+    [-0.78, -0.33],
+    [0.78, -0.33],
+    [-0.78, 0.33],
+    [0.78, 0.33],
+  ]) {
+    ctx.beginPath();
+    ctx.arc(px(x), pz(z), 0.03 * k, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.filter = "none";
+  const tex = new THREE.CanvasTexture(canvas);
+  return tex;
+}
+
+export function createGround(lightDir = new THREE.Vector3(-1.2, 5.4, 1.9)) {
   const group = new THREE.Group();
 
+  // Where the desk top's shadow lands: projected from its height along the light.
+  const h = DESK_TOP;
+  const offset = { x: (-lightDir.x / lightDir.y) * h, z: (-lightDir.z / lightDir.y) * h };
+
   const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(30, 30),
-    new THREE.ShadowMaterial({ color: 0x3a3226, opacity: 0.16 }),
+    new THREE.PlaneGeometry(4, 4),
+    new THREE.MeshBasicMaterial({ map: deskFloorShadowTexture(offset), color: 0x2b241a, transparent: true, opacity: 0.32, depthWrite: false }),
   );
   floor.rotation.x = -Math.PI / 2;
-  floor.receiveShadow = true;
+  floor.position.y = 0.001;
   group.add(floor);
 
-  // Soft contact shadow under the desk (ambient occlusion feel).
+  // Kept for the day/night lighting code (very soft extra occlusion).
   const blob = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.6, 1.6),
+    new THREE.PlaneGeometry(3.2, 2.1),
     new THREE.MeshBasicMaterial({
       map: radialShadowTexture(),
       transparent: true,
-      opacity: 0.22,
+      opacity: 0.12,
       depthWrite: false,
       color: 0x2b241a,
     }),
   );
   blob.rotation.x = -Math.PI / 2;
-  blob.position.y = 0.001;
+  blob.position.y = 0.0005;
   group.add(blob);
-  return { group, floorMaterial: floor.material as THREE.ShadowMaterial, blobMaterial: blob.material as THREE.MeshBasicMaterial };
+  return { group, floorMaterial: floor.material as THREE.MeshBasicMaterial, blobMaterial: blob.material as THREE.MeshBasicMaterial };
 }
 
 export function createDesk() {
@@ -254,7 +302,7 @@ export function createNotebook() {
   group.add(cover);
   const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.205), std("#ffffff", 0.95, 0, { map: paperTexture() }));
   paper.rotation.x = -Math.PI / 2;
-  paper.position.y = 0.0085;
+  paper.position.y = 0.0089;
   paper.receiveShadow = true;
   group.add(paper);
 

@@ -48,7 +48,7 @@ const DAY = {
   hemi: 1.15,
   sun: 2.3,
   env: 0.55,
-  floorShadow: 0.16,
+  floorShadow: 0.32,
   screenLight: 0,
 };
 
@@ -153,7 +153,7 @@ export class DeskScene {
     container.appendChild(this.renderer.domElement);
 
     // --- Camera ----------------------------------------------------------
-    this.camera = new THREE.PerspectiveCamera(this.fovFor(width / height), width / height, 0.02, 60);
+    this.camera = new THREE.PerspectiveCamera(this.fovFor(width / height), width / height, 0.06, 40);
     this.cssCamera = this.camera.clone();
     this.rig = this.camera.clone();
     this.controls = this.createControls(container);
@@ -173,18 +173,21 @@ export class DeskScene {
     this.scene.add(this.hemi);
 
     this.sun = new THREE.DirectionalLight("#fff3e2", DAY.sun);
-    this.sun.position.set(-2.2, 4.2, 2.6);
+    // High, slightly frontal key light: the desk shadow falls close under it.
+    this.sun.position.set(-1.2, 5.4, 1.9);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
     const sc = this.sun.shadow.camera;
-    sc.left = -1.6;
-    sc.right = 1.6;
-    sc.top = 1.6;
-    sc.bottom = -1.6;
+    // The floor shadow is pre-drawn, so the shadow map only has to cover the
+    // desk top (sharper shadows of the objects on it).
+    sc.left = -1.3;
+    sc.right = 1.3;
+    sc.top = 1.3;
+    sc.bottom = -1.3;
     sc.near = 1;
-    sc.far = 10;
-    this.sun.shadow.bias = -0.0003;
-    this.sun.shadow.normalBias = 0.015;
+    sc.far = 12;
+    this.sun.shadow.bias = -0.0002;
+    this.sun.shadow.normalBias = 0.025;
     this.sun.shadow.radius = 6;
     this.scene.add(this.sun);
 
@@ -523,7 +526,7 @@ export class DeskScene {
     this.sun.intensity = lerp(DAY.sun, NIGHT.sun);
     this.scene.environmentIntensity = lerp(DAY.env, NIGHT.env);
     this.ground.floorMaterial.opacity = lerp(DAY.floorShadow, NIGHT.floorShadow);
-    this.ground.blobMaterial.opacity = lerp(0.22, 0.5);
+    this.ground.blobMaterial.opacity = lerp(0.12, 0.4);
     this.screenLight.intensity = lerp(DAY.screenLight, NIGHT.screenLight);
     this.opts.container.style.setProperty("--scene-bg", `#${(this.scene.background as THREE.Color).getHexString()}`);
   }

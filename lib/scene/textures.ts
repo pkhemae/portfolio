@@ -26,56 +26,64 @@ export function rng(seed: number) {
 }
 
 export function woodTexture(): THREE.CanvasTexture {
+  // Dark oak with a quiet, irregular figure: soft colour variations first,
+  // then a few faint, blurred grain lines of varying length.
   const w = 2048;
   const h = 1024;
   const { canvas, ctx } = makeCanvas(w, h);
-  const rand = rng(7);
+  const rand = rng(11);
 
-  // Dark oak.
-  ctx.fillStyle = "#7a5233";
+  ctx.fillStyle = "#74502f";
   ctx.fillRect(0, 0, w, h);
 
-  // Broad tone variations.
-  for (let i = 0; i < 18; i++) {
+  // Large, soft tone variations (long along the grain).
+  ctx.filter = "blur(24px)";
+  for (let i = 0; i < 70; i++) {
+    const x = rand() * w;
     const y = rand() * h;
-    const grd = ctx.createLinearGradient(0, y - 80, 0, y + 80);
-    const tone = rand() > 0.5 ? "rgba(52,31,17," : "rgba(160,112,68,";
-    grd.addColorStop(0, tone + "0)");
-    grd.addColorStop(0.5, tone + (0.12 + rand() * 0.16) + ")");
-    grd.addColorStop(1, tone + "0)");
-    ctx.fillStyle = grd;
-    ctx.fillRect(0, y - 80, w, 160);
+    const rx = 200 + rand() * 700;
+    const ry = 20 + rand() * 70;
+    const dark = rand() > 0.45;
+    ctx.fillStyle = dark ? `rgba(58,36,20,${0.08 + rand() * 0.14})` : `rgba(150,108,66,${0.06 + rand() * 0.12})`;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, (rand() - 0.5) * 0.04, 0, Math.PI * 2);
+    ctx.fill();
   }
 
-  // Fine grain lines.
-  for (let i = 0; i < 520; i++) {
+  // Faint grain: segments of varying length and opacity, softened by a blur.
+  ctx.filter = "blur(1.2px)";
+  for (let i = 0; i < 340; i++) {
     const y0 = rand() * h;
-    const amp = 2 + rand() * 10;
-    const freq = 0.001 + rand() * 0.004;
+    const x0 = rand() * w * 0.6 - w * 0.1;
+    const len = w * (0.25 + rand() * 0.9);
+    const amp = 1.5 + rand() * 6;
+    const freq = 0.0015 + rand() * 0.004;
     const phase = rand() * Math.PI * 2;
-    ctx.strokeStyle = `rgba(${40 + rand() * 30},${24 + rand() * 18},${12 + rand() * 12},${0.08 + rand() * 0.22})`;
-    ctx.lineWidth = 0.6 + rand() * 1.6;
+    ctx.strokeStyle = `rgba(${45 + rand() * 25},${28 + rand() * 14},${14 + rand() * 10},${0.025 + rand() * 0.07})`;
+    ctx.lineWidth = 0.8 + rand() * 2.2;
     ctx.beginPath();
-    for (let x = 0; x <= w; x += 16) {
-      const y = y0 + Math.sin(x * freq + phase) * amp;
-      if (x === 0) ctx.moveTo(x, y);
+    for (let x = x0; x <= x0 + len; x += 24) {
+      const y = y0 + Math.sin(x * freq + phase) * amp + Math.sin(x * freq * 3.1 + phase * 2) * amp * 0.3;
+      if (x === x0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
     ctx.stroke();
   }
 
-  // Oak "ray flecks": short, slightly lighter streaks typical of quarter-sawn oak.
-  for (let i = 0; i < 260; i++) {
+  // Oak flecks: short, lighter, very subtle.
+  ctx.filter = "blur(0.8px)";
+  for (let i = 0; i < 180; i++) {
     const x = rand() * w;
     const y = rand() * h;
-    const len = 20 + rand() * 70;
-    ctx.strokeStyle = `rgba(170,125,80,${0.06 + rand() * 0.1})`;
-    ctx.lineWidth = 1 + rand() * 2.5;
+    const len = 12 + rand() * 50;
+    ctx.strokeStyle = `rgba(165,122,78,${0.04 + rand() * 0.07})`;
+    ctx.lineWidth = 1 + rand() * 2;
     ctx.beginPath();
     ctx.moveTo(x, y);
-    ctx.lineTo(x + len, y + (rand() - 0.5) * 3);
+    ctx.lineTo(x + len, y + (rand() - 0.5) * 2);
     ctx.stroke();
   }
+  ctx.filter = "none";
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;

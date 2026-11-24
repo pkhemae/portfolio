@@ -126,14 +126,16 @@ export function createDisplay(): DisplayParts {
   head.add(body);
 
   const front = BZ + D / 2;
-  const bezelMat = new THREE.MeshStandardMaterial({ color: "#050506", roughness: 0.08, metalness: 0.2 });
+  // Layers in front of the body are spread ~0.4 mm apart and the bezel is
+  // pushed back in depth, so they never z-fight when seen from far away.
+  const bezelMat = new THREE.MeshStandardMaterial({ color: "#050506", roughness: 0.08, metalness: 0.2, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
   const bezel = new THREE.Mesh(new THREE.ShapeGeometry(roundedRect(W - 0.004, H - 0.004, 0.007), 10), bezelMat);
-  bezel.position.set(0, centerY, front + 0.0003);
+  bezel.position.set(0, centerY, front + 0.0004);
   head.add(bezel);
 
   // Tiny camera at the top of the bezel.
   const cam = new THREE.Mesh(new THREE.CircleGeometry(0.0022, 20), std("#1a1c22", 0.2, 0.4));
-  cam.position.set(0, centerY + H / 2 - 0.0075, front + 0.0005);
+  cam.position.set(0, centerY + H / 2 - 0.0075, front + 0.0008);
   head.add(cam);
 
   const screenPlane = new THREE.Mesh(
@@ -142,7 +144,7 @@ export function createDisplay(): DisplayParts {
     // underneath shows through, while staying depth-occluded.
     new THREE.MeshBasicMaterial({ color: 0x000000, opacity: 0, transparent: true, blending: THREE.NoBlending, side: THREE.DoubleSide }),
   );
-  screenPlane.position.set(0, centerY, front + 0.0007);
+  screenPlane.position.set(0, centerY, front + 0.0012);
   screenPlane.name = "screen";
   screenPlane.renderOrder = 1;
   head.add(screenPlane);
@@ -151,7 +153,7 @@ export function createDisplay(): DisplayParts {
     new THREE.PlaneGeometry(SCREEN.width, SCREEN.height),
     new THREE.MeshBasicMaterial({ map: glassTexture(), transparent: true, opacity: 0.18, depthWrite: false }),
   );
-  glass.position.set(0, centerY, front + 0.0011);
+  glass.position.set(0, centerY, front + 0.002);
   glass.renderOrder = 3;
   head.add(glass);
 
@@ -159,7 +161,7 @@ export function createDisplay(): DisplayParts {
     new THREE.PlaneGeometry(SCREEN.width, SCREEN.height),
     new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0, depthWrite: false }),
   );
-  dimmer.position.set(0, centerY, front + 0.0009);
+  dimmer.position.set(0, centerY, front + 0.0016);
   dimmer.renderOrder = 2;
   head.add(dimmer);
 
@@ -200,7 +202,7 @@ export function createStickyNote() {
   const note = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.07), std("#ffffff", 0.9, 0, { map: stickyNoteTexture(["salut", ":)"]) }));
   note.rotation.x = -Math.PI / 2;
   note.rotation.z = 0.25;
-  note.position.set(0.21, DESK_TOP + 0.0006, -0.01);
+  note.position.set(0.21, DESK_TOP + 0.0012, -0.01);
   note.receiveShadow = true;
   return note;
 }
@@ -400,7 +402,7 @@ export function createKeyboard() {
     new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.5, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
   );
   legends.rotation.x = -Math.PI / 2;
-  legends.position.y = keyTop + 0.00005;
+  legends.position.y = keyTop + 0.0001;
   legends.receiveShadow = true;
   deck.add(legends);
 

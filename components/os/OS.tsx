@@ -43,6 +43,28 @@ export default function OS({ posts, compact = false, width, height, powered, dar
   const [windows, setWindows] = useState<WindowState[]>([]);
   const [phase, setPhase] = useState<"off" | "boot" | "on">(powered ? "on" : "off");
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const appleRef = useRef<HTMLButtonElement>(null);
+
+  // Like on macOS, a menu closes on any click outside of it (in an app window,
+  // on the Dock, on the desktop…).
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (menuRef.current?.contains(t) || appleRef.current?.contains(t)) return;
+      setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown, true);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const zRef = useRef(10);
   const cascade = useRef(0);
@@ -180,7 +202,7 @@ export default function OS({ posts, compact = false, width, height, powered, dar
       {/* Menu bar */}
       <div className="menubar absolute top-0 inset-x-0 flex items-center justify-between px-2.5 z-[9000] text-[13px]" style={{ height: MENU_H }}>
         <div className="flex items-center min-w-0">
-          <button type="button" className={`menubar-item ${menuOpen ? "is-open" : ""}`} onClick={() => setMenuOpen((o) => !o)} aria-label="Menu Apple">
+          <button ref={appleRef} type="button" className={`menubar-item ${menuOpen ? "is-open" : ""}`} onClick={() => setMenuOpen((o) => !o)} aria-label="Menu Apple" aria-expanded={menuOpen}>
             <Logo size={15} />
           </button>
           <span className="menubar-item font-bold">{activeName}</span>
@@ -214,7 +236,7 @@ export default function OS({ posts, compact = false, width, height, powered, dar
       </div>
 
       {menuOpen && (
-        <div className="mac-menu absolute left-2 z-[9500] w-[260px] py-1.5 text-[13px]" style={{ top: MENU_H + 2 }}>
+        <div ref={menuRef} role="menu" className="mac-menu absolute left-2 z-[9500] w-[260px] py-1.5 text-[13px]" style={{ top: MENU_H + 2 }}>
           <button type="button" className="mac-menu-item" onClick={() => openApp("about")}>
             À propos de ce Mac
           </button>
@@ -241,7 +263,7 @@ export default function OS({ posts, compact = false, width, height, powered, dar
               <div className="mac-menu-sep" />
               <button
                 type="button"
-                className="mac-menu-item flex justify-between"
+                className="mac-menu-item"
                 onClick={() => {
                   setMenuOpen(false);
                   onLeave();
@@ -318,62 +340,88 @@ export default function OS({ posts, compact = false, width, height, powered, dar
 /* Dock with magnification                                                   */
 /* ------------------------------------------------------------------------ */
 
+const MAGNIFY = 0.6; // max extra size (60%)
+const RANGE = 2.6; // influence radius, in icon widths
+
 function Dock({ compact, running, getScale, onOpen, onTrash }: { compact: boolean; running: AppId[]; getScale: () => number; onOpen: (app: AppId) => void; onTrash: () => void }) {
-  const base = compact ? 48 : 58;
-  const [mouseX, setMouseX] = useState<number | null>(null);
+  const base = compact ? 48 : 56;
+  const entries: { key: AppId | "trash"; label: string }[] = [...DOCK.map((id) => ({ key: id, label: APPS[id].name })), { key: "trash", label: "Corbeille" }];
+
   const [hover, setHover] = useState<string | null>(null);
   const [launching, setLaunching] = useState<string | null>(null);
-  const centers = useRef<number[]>([]);
-  const refs = useRef<(HTMLElement | null)[]>([]);
+  const [scales, setScales] = useState<number[]>(() => entries.map(() => 1));
+  const navRef = useRef<HTMLElement>(null);
+  const target = useRef<number | null>(null); // pointer x along the Dock, in Dock pixels at rest
+  const current = useRef<number[]>(entries.map(() => 1));
+  const raf = useRef(0);
 
-  // Icon centers are measured at rest (unmagnified) when the pointer enters.
-  const measure = () => {
-    centers.current = refs.current.map((el) => {
-      if (!el) return 0;
-      const r = el.getBoundingClientRect();
-      return r.left + r.width / 2;
+  // Rest layout: centre of each icon (in Dock pixels) when nothing is magnified.
+  const sepW = 11;
+  const restCenters = entries.map((e, i) => base * (i + 0.5) + (e.key === "trash" ? sepW : 0));
+
+  // Smoothly animate every icon towards its target scale (critically damped).
+  const tick = () => {
+    const px = target.current;
+    let moving = false;
+    const next = current.current.map((v, i) => {
+      let goal = 1;
+      if (px !== null) {
+        const d = Math.abs(px - restCenters[i]) / base;
+        if (d < RANGE) goal = 1 + MAGNIFY * (0.5 + 0.5 * Math.cos((Math.PI * d) / RANGE));
+      }
+      const nv = v + (goal - v) * 0.28;
+      if (Math.abs(goal - nv) > 0.002) moving = true;
+      return Math.abs(goal - nv) > 0.002 ? nv : goal;
     });
+    current.current = next;
+    setScales(next);
+    raf.current = moving ? requestAnimationFrame(tick) : 0;
+  };
+  const kick = () => {
+    if (!raf.current) raf.current = requestAnimationFrame(tick);
+  };
+  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+
+  const onMove = (e: React.PointerEvent) => {
+    if (compact) return;
+    const nav = navRef.current;
+    if (!nav) return;
+    // Convert to Dock pixels at rest: the Dock is centred, so measure from its centre.
+    const r = nav.getBoundingClientRect();
+    const scale = getScale() || 1;
+    const restWidth = entries.length * base + sepW;
+    const fromCenter = (e.clientX - (r.left + r.width / 2)) / scale;
+    target.current = restWidth / 2 + fromCenter;
+    kick();
   };
 
-  const sizeFor = (i: number) => {
-    if (compact || mouseX === null || !centers.current[i]) return base;
-    const dist = Math.abs(mouseX - centers.current[i]) / (getScale() || 1);
-    // Same falloff as the macOS Dock: neighbours grow too, on a smooth curve.
-    const k = Math.max(0, 1 - dist / 170);
-    return Math.round(base * (1 + 0.6 * (0.5 - 0.5 * Math.cos(k * Math.PI))));
+  const onLeave = () => {
+    target.current = null;
+    setHover(null);
+    kick();
   };
-
-  const entries: { key: AppId | "trash"; label: string }[] = [...DOCK.map((id) => ({ key: id, label: APPS[id].name })), { key: "trash", label: "Corbeille" }];
 
   return (
     <nav
-      className="dock absolute left-1/2 -translate-x-1/2 bottom-[4px] z-[9000] flex items-end px-[4px] pb-[2px]"
-      // Fixed height: magnified icons grow upwards out of the Dock, like on macOS.
-      style={{ height: base + 4 }}
-      onPointerEnter={(e) => {
-        if (mouseX === null) measure();
-        setMouseX(e.clientX);
-      }}
-      onPointerMove={(e) => setMouseX(e.clientX)}
-      onPointerLeave={() => {
-        setMouseX(null);
-        setHover(null);
-      }}
+      ref={navRef}
+      className="dock absolute left-1/2 -translate-x-1/2 bottom-[4px] z-[9000] flex items-end px-[4px]"
+      // Fixed height: icons are scaled from their bottom edge and grow upwards
+      // out of the Dock, so the row always stays aligned at the bottom.
+      style={{ height: base + 6 }}
+      onPointerMove={onMove}
+      onPointerLeave={onLeave}
     >
       {entries.map((it, i) => {
-        const s = sizeFor(i);
+        const k = compact ? 1 : scales[i];
         const isTrash = it.key === "trash";
+        const app = it.key as AppId;
         return (
-          <div key={it.key} className="flex items-end">
-            {isTrash && <span className="dock-sep self-stretch mx-[5px] my-2" />}
+          <div key={it.key} className="flex items-end h-full">
+            {isTrash && <span className="dock-sep self-center h-[70%] mx-[5px]" />}
             <button
-              ref={(el) => {
-                refs.current[i] = el;
-              }}
               type="button"
               onClick={() => {
                 if (isTrash) return onTrash();
-                const app = it.key as AppId;
                 // Apps bounce while they "launch", like on macOS.
                 if (!running.includes(app)) {
                   setLaunching(app);
@@ -382,15 +430,21 @@ function Dock({ compact, running, getScale, onOpen, onTrash }: { compact: boolea
                 onOpen(app);
               }}
               onPointerEnter={() => setHover(it.key)}
-              className={`dock-item relative flex flex-col items-center ${launching === it.key ? "is-launching" : ""}`}
-              style={{ width: s, height: s }}
+              className={`dock-item relative h-full ${launching === it.key ? "is-launching" : ""}`}
+              style={{ width: base * k }}
               aria-label={it.label}
             >
-              {!compact && <span className={`dock-tooltip absolute bottom-full mb-1 whitespace-nowrap ${hover === it.key ? "is-visible" : ""}`}>{it.label}</span>}
-              <span className="dock-icon block">
-                <AppIcon app={isTrash ? "trash-full" : (it.key as AppId)} size={s} />
+              {!compact && (
+                <span className={`dock-tooltip absolute left-1/2 whitespace-nowrap ${hover === it.key ? "is-visible" : ""}`} style={{ bottom: base * k + 8 }}>
+                  {it.label}
+                </span>
+              )}
+              <span className="dock-bounce absolute left-1/2 bottom-[3px]" style={{ width: base, height: base, marginLeft: -base / 2 }}>
+                <span className="dock-icon block" style={{ transform: `scale(${k})` }}>
+                  <AppIcon app={isTrash ? "trash-full" : app} size={base} />
+                </span>
               </span>
-              {!isTrash && <span className={`dock-dot absolute bottom-[0px] ${running.includes(it.key as AppId) ? "opacity-100" : "opacity-0"}`} />}
+              {!isTrash && <span className={`dock-dot absolute left-1/2 -ml-[2px] bottom-[-1px] ${running.includes(app) ? "opacity-100" : "opacity-0"}`} />}
             </button>
           </div>
         );
