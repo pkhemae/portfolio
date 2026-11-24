@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 interface TableOfContentsProps {
@@ -40,13 +39,8 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
     }, [toc]);
 
     return (
-        <nav className="sticky top-20 self-start">
-            <Link
-                href="/"
-                className="flex items-center gap-2 text-neutral-500 hover:text-neutral-800 transition-colors mb-8 text-sm"
-            >
-                <span>←</span> Accueil
-            </Link>
+        <nav className="sticky top-24 self-start">
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-neutral-400 mb-4">Sommaire</p>
 
             <ul className="space-y-3 text-sm">
                 {toc.map((heading) => (
