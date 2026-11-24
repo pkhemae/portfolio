@@ -440,8 +440,13 @@ function Dock({ compact, running, getScale, onOpen, onTrash }: { compact: boolea
                 </span>
               )}
               <span className="dock-bounce absolute left-1/2 bottom-[3px]" style={{ width: base, height: base, marginLeft: -base / 2 }}>
-                <span className="dock-icon block" style={{ transform: `scale(${k})` }}>
-                  <AppIcon app={isTrash ? "trash-full" : app} size={base} />
+                {/* Drawn at the largest size and scaled down: always crisp,
+                    never a stretched bitmap. */}
+                <span
+                  className="dock-icon absolute left-1/2 bottom-0"
+                  style={{ width: base * (1 + MAGNIFY), height: base * (1 + MAGNIFY), marginLeft: (-base * (1 + MAGNIFY)) / 2, transform: `scale(${k / (1 + MAGNIFY)})` }}
+                >
+                  <AppIcon app={isTrash ? "trash-full" : app} size={base * (1 + MAGNIFY)} />
                 </span>
               </span>
               {!isTrash && <span className={`dock-dot absolute left-1/2 -ml-[2px] bottom-[-1px] ${running.includes(app) ? "opacity-100" : "opacity-0"}`} />}

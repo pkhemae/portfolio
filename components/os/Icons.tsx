@@ -30,9 +30,24 @@ function useIds(n: number) {
   return Array.from({ length: n }, (_, i) => `${base}${i}`);
 }
 
-function Frame({ size, children }: { size: number; children: React.ReactNode }) {
+/**
+ * Icon canvas. The drop shadow is drawn inside the SVG (not with a CSS
+ * filter), so it stays as crisp as the vector icon at any size.
+ */
+function Frame({ size, children, shadow = true }: { size: number; children: React.ReactNode; shadow?: boolean }) {
+  const [blur] = useIds(1);
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden className="mac-icon">
+      {shadow && (
+        <>
+          <defs>
+            <filter id={blur} x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="1.6" />
+            </filter>
+          </defs>
+          <path d={SQUIRCLE} transform="translate(0 1.8)" fill="rgba(0,0,0,0.3)" filter={`url(#${blur})`} />
+        </>
+      )}
       {children}
     </svg>
   );
@@ -214,27 +229,91 @@ function SystemInfo({ size }: { size: number }) {
   );
 }
 
+/**
+ * Trash in the style of the macOS Dock: a frosted, slightly translucent metal
+ * bin, tapered towards the bottom, with a rolled rim. When full, crumpled
+ * sheets (a newspaper page, a photo, a printout) stick out of it.
+ */
 function Trash({ size, full }: { size: number; full?: boolean }) {
-  const [body] = useIds(1);
+  const [metal, inner, rim, shade, gloss, blur] = useIds(6);
+  // Bin outline: top ellipse at y=22 (rx 33), bottom at y=90 (rx 25).
+  const body = "M17 22 L25 88 Q26 93 50 93 Q74 93 75 88 L83 22 Z";
   return (
-    <Frame size={size}>
+    <Frame size={size} shadow={false}>
       <defs>
-        <linearGradient id={body} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="rgba(225,229,234,0.75)" />
-          <stop offset="0.5" stopColor="rgba(250,251,252,0.9)" />
-          <stop offset="1" stopColor="rgba(215,219,225,0.75)" />
+        <linearGradient id={metal} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#5d6066" />
+          <stop offset="0.16" stopColor="#8f9298" />
+          <stop offset="0.34" stopColor="#c3c6cb" />
+          <stop offset="0.5" stopColor="#a8abb1" />
+          <stop offset="0.78" stopColor="#80838a" />
+          <stop offset="1" stopColor="#55585e" />
         </linearGradient>
+        <linearGradient id={shade} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="rgba(0,0,0,0.28)" />
+          <stop offset="0.25" stopColor="rgba(0,0,0,0)" />
+          <stop offset="0.85" stopColor="rgba(0,0,0,0.05)" />
+          <stop offset="1" stopColor="rgba(0,0,0,0.25)" />
+        </linearGradient>
+        <linearGradient id={gloss} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="rgba(255,255,255,0)" />
+          <stop offset="0.5" stopColor="rgba(255,255,255,0.35)" />
+          <stop offset="1" stopColor="rgba(255,255,255,0)" />
+        </linearGradient>
+        <radialGradient id={inner} cx="0.5" cy="0.6" r="0.7">
+          <stop offset="0" stopColor="#2a2c30" />
+          <stop offset="1" stopColor="#4a4d52" />
+        </radialGradient>
+        <linearGradient id={rim} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#9a9da2" />
+          <stop offset="0.35" stopColor="#eef0f2" />
+          <stop offset="0.7" stopColor="#c4c7cc" />
+          <stop offset="1" stopColor="#8d9095" />
+        </linearGradient>
+        <filter id={blur} x="-20%" y="-50%" width="140%" height="200%">
+          <feGaussianBlur stdDeviation="2" />
+        </filter>
       </defs>
-      <path d="M22 24h56l-5 64a5 5 0 0 1-5 5H32a5 5 0 0 1-5-5z" fill={`url(#${body})`} stroke="#aeb4bc" strokeWidth="1.2" />
-      {full && <path d="M28 26q6-12 16-6t14-4 14 8l-1 4H28z" fill="#fafafa" stroke="#c6cad0" strokeWidth="0.8" />}
-      {Array.from({ length: 9 }).map((_, i) => {
-        const x = 28 + i * 5.5;
-        return <line key={i} x1={x} y1="30" x2={x + (50 - x) * 0.08} y2="88" stroke="#bfc5cc" strokeWidth="0.9" />;
-      })}
-      {[40, 54, 68, 82].map((y) => (
-        <line key={y} x1="24" y1={y} x2="76" y2={y} stroke="#c9ced4" strokeWidth="0.7" />
-      ))}
-      <ellipse cx="50" cy="24" rx="29" ry="4.5" fill="#eceff2" stroke="#a7adb6" strokeWidth="1.2" />
+
+      {/* Ground shadow */}
+      <ellipse cx="50" cy="93" rx="27" ry="3.2" fill="rgba(0,0,0,0.35)" filter={`url(#${blur})`} />
+
+      {/* Inside of the bin (seen through the opening) */}
+      <ellipse cx="50" cy="22" rx="33" ry="6.5" fill={`url(#${inner})`} />
+
+      {full && (
+        <g transform="translate(50 23) scale(1.18) translate(-50 -23)">
+          {/* Newspaper page */}
+          <path d="M22 23 L27 9 L41 6 L46 14 L44 24 Z" fill="#f2f0ea" stroke="#b9b6ad" strokeWidth="0.6" />
+          <path d="M28 11 L39 9 M28.5 13.5 L40 11.5 M29 16 L40.5 14 M29.5 18.5 L41 16.5" stroke="#8d8a83" strokeWidth="0.8" />
+          <path d="M27 9 L33 15 L29 22" fill="none" stroke="#d8d5cc" strokeWidth="0.8" />
+          {/* Photo print */}
+          <path d="M44 22 L46 7 L60 5 L63 19 L58 25 Z" fill="#ffffff" stroke="#c9c9c9" strokeWidth="0.6" />
+          <path d="M48 9 L58 7.6 L60.5 18 L50 20 Z" fill="#4f8fd8" />
+          <path d="M50 20 L53.5 14.5 L56 17 L58 13.5 L60.5 18 Z" fill="#3c9a4f" />
+          <path d="M48 9 L52 8.4 L50 13 Z" fill="#e8463b" opacity="0.9" />
+          {/* Crumpled printout */}
+          <path d="M57 24 L59 12 L69 8 L80 13 L79 23 Z" fill="#fbfbfa" stroke="#bcbcbc" strokeWidth="0.6" />
+          <path d="M61 13 L67 18 L64 23 M69 8 L70 16 L77 19" fill="none" stroke="#d4d4d4" strokeWidth="0.8" />
+          <path d="M62 15 L70 12.5 M62.5 17.5 L72 14.8" stroke="#9a9a9a" strokeWidth="0.7" />
+          <path d="M66 20 L74 17.5" stroke="#e2a03b" strokeWidth="1.4" />
+          {/* Ball of paper in the middle */}
+          <path d="M37 22 Q38 13 47 13 Q56 13 57 21 Q50 25 37 22 Z" fill="#eeeeec" stroke="#b5b5b2" strokeWidth="0.6" />
+          <path d="M41 16 L47 19 L52 15 M44 21 L49 17" fill="none" stroke="#cfcfcc" strokeWidth="0.7" />
+        </g>
+      )}
+
+      {/* Body */}
+      <path d={body} fill={`url(#${metal})`} opacity="0.94" />
+      <path d={body} fill={`url(#${shade})`} />
+      {/* Frosted vertical sheen */}
+      <path d="M33 25 L37 89 L45 90 L42 25 Z" fill={`url(#${gloss})`} />
+
+      {/* Rolled rim */}
+      <ellipse cx="50" cy="22" rx="33.5" ry="6.8" fill="none" stroke={`url(#${rim})`} strokeWidth="3" />
+      <path d="M17.5 23.5 Q50 34 82.5 23.5" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.8" />
+      {/* Bottom edge */}
+      <path d="M25.5 88.5 Q26.5 93 50 93 Q73.5 93 74.5 88.5" fill="none" stroke="#45484d" strokeWidth="1" opacity="0.7" />
     </Frame>
   );
 }
