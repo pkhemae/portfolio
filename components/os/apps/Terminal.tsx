@@ -18,9 +18,6 @@ const APP_ALIASES: Record<string, AppId> = {
   cv: "preview",
   mail: "mail",
   contact: "mail",
-  activite: "activity",
-  activité: "activity",
-  github: "activity",
   terminal: "terminal",
 };
 
@@ -61,7 +58,7 @@ export default function Terminal({ api }: { api: OSApi }) {
       case "help":
         say("whoami          qui suis-je ?");
         say("ls              lister les fichiers");
-        say("open <app>      ouvrir une app (finder, safari, notes, cv, mail, github)");
+        say("open <app>      ouvrir une app (finder, safari, notes, cv, mail)");
         say("cat <fichier>   lire un projet, ex. cat Projets/invitewatcher.md");
         say("projets         lister mes projets");
         say("contact         afficher mes coordonnées");

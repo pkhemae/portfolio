@@ -4,13 +4,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --graph-accent: #1D2DFF;
-  --graph-accent-2: #0856c0;
-  --graph-accent-3: #0066ac;
-  --graph-frame: #d4d4d4;
-  --graph-muted: #868686;
-  --graph-faint: #e5e5e5;
-  --contrast-14: #d7d7d7;
+    --contrast-14: #d7d7d7;
   --contrast-23: #b1b1b1;
   --contrast-45: #5d5d5d;
   --contrast-70: #292929;
@@ -21,12 +15,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
-  --color-graph-accent: var(--graph-accent);
-  --color-graph-accent-2: var(--graph-accent-2);
-  --color-graph-accent-3: var(--graph-accent-3);
-  --color-graph-frame: var(--graph-frame);
-  --color-graph-muted: var(--graph-muted);
-  --color-graph-faint: var(--graph-faint);
   --color-contrast-14: var(--contrast-14);
   --color-contrast-23: var(--contrast-23);
   --color-contrast-45: var(--contrast-45);
@@ -43,46 +31,6 @@ body {
 html {
   scroll-behavior: smooth;
 }
-
-/* mdxcn Graph Frame & Rules */
-.graph-frame {
-  background-image: 
-    repeating-linear-gradient(to right, var(--graph-frame) 0 2px, transparent 2px 7px),
-    repeating-linear-gradient(to bottom, var(--graph-frame) 0 2px, transparent 2px 7px),
-    repeating-linear-gradient(to right, var(--graph-frame) 0 2px, transparent 2px 7px),
-    repeating-linear-gradient(to bottom, var(--graph-frame) 0 2px, transparent 2px 7px);
-  background-position: 0 0, 100% 0, 0 100%, 0 0;
-  background-repeat: repeat-x, repeat-y, repeat-x, repeat-y;
-  background-size: 100% 1px, 1px 100%, 100% 1px, 1px 100%;
-}
-
-.graph-rule {
-  background-image: repeating-linear-gradient(to right, var(--graph-frame) 0 2px, transparent 2px 7px);
-  height: 1px;
-}
-
-.graph-rule-y {
-  background-image: repeating-linear-gradient(to bottom, var(--graph-frame) 0 2px, transparent 2px 7px);
-  width: 1px;
-}
-
-.scrollbar-graph {
-  scrollbar-width: thin;
-  scrollbar-color: var(--graph-frame) transparent;
-}
-
-.scrollbar-graph::-webkit-scrollbar {
-  height: 4px;
-}
-
-.scrollbar-graph::-webkit-scrollbar-thumb {
-  background-color: var(--graph-frame);
-  border-radius: 0;
-}
-
-
-
-
 
 /* ------------------------------------------------------------------------ */
 /* 3D experience                                                             */
@@ -110,18 +58,18 @@ html {
 }
 
 /* Terminal-style loader */
-.term-loader-scanlines {
-  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
-}
-
 .term-caret {
   display: inline-block;
-  width: 0.6em;
-  height: 1.1em;
-  margin-left: 2px;
-  vertical-align: -0.2em;
-  background: #d8d8d8;
-  animation: term-blink 1s steps(1) infinite;
+  width: 0.62em;
+  height: 1.15em;
+  vertical-align: -0.22em;
+  background: #e6e6e6;
+  animation: term-blink 1.06s steps(1) infinite;
+}
+
+.term-caret--idle {
+  animation: none;
+  opacity: 0.85;
 }
 
 @keyframes term-blink {
@@ -154,10 +102,6 @@ html {
   --menu: rgba(244, 244, 246, 0.86);
   --dock: rgba(255, 255, 255, 0.32);
   --background: var(--win);
-  --graph-frame: #d4d4d8;
-  --graph-muted: #8a8a8f;
-  --graph-faint: #ececef;
-  --graph-accent: #0a7aff;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), "Helvetica Neue", sans-serif;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -181,10 +125,6 @@ html {
   --menubar: rgba(24, 24, 28, 0.5);
   --menu: rgba(40, 40, 44, 0.86);
   --dock: rgba(40, 40, 46, 0.36);
-  --graph-frame: #3a3a3e;
-  --graph-muted: #8e8e93;
-  --graph-faint: #2c2c30;
-  --graph-accent: #0a84ff;
 }
 
 .mac-text-2 { color: var(--text-2); }
@@ -505,14 +445,22 @@ button.menubar-item:hover,
   backdrop-filter: blur(40px) saturate(1.8);
   -webkit-backdrop-filter: blur(40px) saturate(1.8);
   border: 0.5px solid rgba(255, 255, 255, 0.45);
-  border-radius: 20px;
+  border-radius: 22px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18), inset 0 0 0 0.5px rgba(0, 0, 0, 0.08);
 }
 .os-dark .dock { border-color: rgba(255, 255, 255, 0.16); }
-.dock-item { transition: width 0.12s ease-out, height 0.12s ease-out; }
-.dock-item .mac-icon { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.22)); }
-.dock-item:active .mac-icon { filter: brightness(0.75) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.22)); }
-.dock-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(0, 0, 0, 0.6); }
+.dock-item {
+  transition: width 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.dock-icon { transform-origin: 50% 100%; }
+.dock-item .mac-icon { filter: drop-shadow(0 1.5px 2px rgba(0, 0, 0, 0.25)); }
+.dock-item:active .dock-icon { filter: brightness(0.7); }
+.dock-item.is-launching .dock-icon { animation: dock-bounce 0.65s cubic-bezier(0.3, 0, 0.3, 1) 2; }
+@keyframes dock-bounce {
+  0%, 100% { transform: translateY(0); }
+  45% { transform: translateY(-34%); }
+}
+.dock-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(0, 0, 0, 0.6); transition: opacity 0.3s ease; }
 .os-dark .dock-dot { background: rgba(255, 255, 255, 0.8); }
 .dock-sep { width: 1px; background: rgba(0, 0, 0, 0.18); }
 .os-dark .dock-sep { background: rgba(255, 255, 255, 0.2); }
@@ -525,6 +473,28 @@ button.menubar-item:hover,
   border: 0.5px solid var(--hairline);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(20px);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  pointer-events: none;
+}
+.dock-tooltip.is-visible { opacity: 1; transform: none; }
+.dock-tooltip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  background: inherit;
+  border-right: 0.5px solid var(--hairline);
+  border-bottom: 0.5px solid var(--hairline);
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock-item.is-launching .dock-icon { animation: none; }
 }
 
 /* Blog prose links (article pages) */

@@ -3,23 +3,53 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Terminal-style boot loader: log lines are printed one by one, an ASCII
- * progress bar follows the real loading of the 3D scene, then the visitor
- * presses Enter (or clicks) to start.
+ * Boot screen that looks like a real terminal session: commands are typed
+ * at the zsh prompt, the server logs scroll by, the "Compiling" step waits
+ * for the 3D scene to be ready, and the last command waits for Enter.
  */
 
-const BOOT: { text: string; status?: string; delay: number }[] = [
-  { text: "khemara-portfolio v2026.11 — tty0", delay: 120 },
-  { text: "", delay: 60 },
-  { text: "Chargement du noyau", status: "ok", delay: 160 },
-  { text: "Montage de /home/khemara", status: "ok", delay: 140 },
-  { text: "Initialisation du moteur WebGL", status: "ok", delay: 220 },
-  { text: "Modélisation du bureau", status: "ok", delay: 180 },
-  { text: "Branchement de l'écran, du clavier et de la souris", status: "ok", delay: 200 },
-  { text: "Allumage de la lampe", status: "ok", delay: 150 },
-  { text: "Préparation du café", status: "ok", delay: 170 },
-  { text: "Démarrage de l'interface", status: "ok", delay: 140 },
+const PROMPT = "khemara@MacBook-Pro portfolio %";
+
+type Step =
+  | { kind: "type"; cmd: string; prompt?: string; pause?: number }
+  | { kind: "out"; text: string; delay?: number; tone?: "dim" | "ok" | "accent" }
+  | { kind: "wait" };
+
+const SCRIPT: Step[] = [
+  { kind: "out", text: `Last login: ${lastLogin()} on ttys002`, delay: 80 },
+  { kind: "type", cmd: "cd ~/dev/portfolio", prompt: "khemara@MacBook-Pro ~ %", pause: 160 },
+  { kind: "type", cmd: "npm run start", pause: 220 },
+  { kind: "out", text: "", delay: 40 },
+  { kind: "out", text: "> portfolio@2.0.0 start", delay: 60, tone: "dim" },
+  { kind: "out", text: "> next start", delay: 120, tone: "dim" },
+  { kind: "out", text: "", delay: 40 },
+  { kind: "out", text: "   ▲ Next.js 15.2.8", delay: 160 },
+  { kind: "out", text: "   - Local:        http://localhost:3000", delay: 40 },
+  { kind: "out", text: "", delay: 60 },
+  { kind: "out", text: " ✓ Starting...", delay: 180, tone: "ok" },
+  { kind: "out", text: " ✓ Ready in 412ms", delay: 220, tone: "ok" },
+  { kind: "out", text: " ○ Compiling / ...", delay: 120 },
+  { kind: "wait" },
+  { kind: "out", text: " ✓ Compiled / in 1.4s (968 modules)", delay: 60, tone: "ok" },
+  { kind: "out", text: " GET / 200 in 1532ms", delay: 160, tone: "dim" },
+  { kind: "out", text: "", delay: 60 },
 ];
+
+const FINAL_CMD = "open http://localhost:3000";
+
+function lastLogin() {
+  const d = new Date(Date.now() - 1000 * 60 * 47);
+  const day = d.toLocaleDateString("en-US", { weekday: "short" });
+  const mon = d.toLocaleDateString("en-US", { month: "short" });
+  const time = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  return `${day} ${mon} ${String(d.getDate()).padStart(2, " ")} ${time}`;
+}
+
+interface Line {
+  prompt?: string;
+  text: string;
+  tone?: "dim" | "ok" | "accent";
+}
 
 interface LoaderProps {
   /** Real loading progress of the scene, 0 to 1. */
@@ -29,92 +59,122 @@ interface LoaderProps {
   note?: string;
 }
 
-function bar(p: number, width = 28) {
-  const filled = Math.round(p * width);
-  return `[${"#".repeat(filled)}${".".repeat(width - filled)}] ${String(Math.round(p * 100)).padStart(3, " ")}%`;
-}
-
 export default function Loader({ progress, onStart, leaving, note }: LoaderProps) {
-  const [shown, setShown] = useState(0);
-  const [display, setDisplay] = useState(0);
+  const [lines, setLines] = useState<Line[]>([]);
+  const [typing, setTyping] = useState<{ prompt: string; text: string } | null>(null);
+  const [step, setStep] = useState(0);
+  const [ready, setReady] = useState(false);
+  const progressRef = useRef(progress);
+  progressRef.current = progress;
   const started = useRef(false);
+  const readyRef = useRef(false);
+  readyRef.current = ready;
 
-  // Print the boot log line by line.
+  // Play the script, one step at a time.
   useEffect(() => {
-    if (shown >= BOOT.length) return;
-    const id = setTimeout(() => setShown((s) => s + 1), BOOT[shown].delay);
-    return () => clearTimeout(id);
-  }, [shown]);
+    if (step >= SCRIPT.length) {
+      // Type the final command and wait for Enter.
+      let i = 0;
+      const id = setInterval(() => {
+        i++;
+        setTyping({ prompt: PROMPT, text: FINAL_CMD.slice(0, i) });
+        if (i >= FINAL_CMD.length) {
+          clearInterval(id);
+          readyRef.current = true;
+          setReady(true);
+        }
+      }, 38);
+      return () => clearInterval(id);
+    }
 
-  // The bar follows the real progress but never faster than the log.
-  const target = Math.min(progress, shown / BOOT.length);
-  useEffect(() => {
-    const id = setInterval(() => setDisplay((d) => (d >= target ? d : Math.min(target, d + 0.04))), 40);
-    return () => clearInterval(id);
-  }, [target]);
-
-  const done = display >= 1 && shown >= BOOT.length;
+    const s = SCRIPT[step];
+    if (s.kind === "out") {
+      const id = setTimeout(() => {
+        setLines((l) => [...l, { text: s.text, tone: s.tone }]);
+        setStep((x) => x + 1);
+      }, s.delay ?? 80);
+      return () => clearTimeout(id);
+    }
+    if (s.kind === "wait") {
+      const id = setInterval(() => {
+        if (progressRef.current >= 1) {
+          clearInterval(id);
+          setStep((x) => x + 1);
+        }
+      }, 60);
+      return () => clearInterval(id);
+    }
+    // Type a command character by character, with a human rhythm.
+    const prompt = s.prompt ?? PROMPT;
+    let i = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      i++;
+      setTyping({ prompt, text: s.cmd.slice(0, i) });
+      if (i < s.cmd.length) {
+        timer = setTimeout(tick, 35 + Math.random() * 55);
+      } else {
+        timer = setTimeout(() => {
+          setTyping(null);
+          setLines((l) => [...l, { prompt, text: s.cmd }]);
+          setStep((x) => x + 1);
+        }, s.pause ?? 150);
+      }
+    };
+    timer = setTimeout(tick, 260);
+    return () => clearTimeout(timer);
+  }, [step]);
 
   const go = () => {
-    if (!done || started.current) return;
+    if (!readyRef.current || started.current) return;
     started.current = true;
+    setTyping(null);
+    setLines((l) => [...l, { prompt: PROMPT, text: FINAL_CMD }]);
     onStart();
   };
 
+  // Listen from the start and check readiness at key time, so an Enter
+  // pressed right as the prompt appears is never lost.
+  const goRef = useRef(go);
+  goRef.current = go;
   useEffect(() => {
-    if (!done) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Enter" || e.key === " ") go();
+      if (e.key === "Enter") goRef.current();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [done]);
+  }, []);
+
+  const tone = (t?: Line["tone"]) => (t === "dim" ? "text-[#8b8b8b]" : t === "ok" ? "text-[#4fd17a]" : t === "accent" ? "text-[#6cb6ff]" : "");
 
   return (
     <div
-      className={`term-loader fixed inset-0 z-50 bg-black text-[#d8d8d8] font-mono transition-opacity duration-700 ${leaving ? "opacity-0 pointer-events-none" : "opacity-100"} ${done ? "cursor-pointer" : ""}`}
+      className={`term-loader fixed inset-0 z-50 bg-[#1e1e1e] text-[#e6e6e6] transition-opacity duration-700 ${leaving ? "opacity-0 pointer-events-none" : "opacity-100"} ${ready ? "cursor-pointer" : ""}`}
       onClick={go}
-      role="status"
-      aria-live="polite"
     >
-      <div className="absolute inset-0 term-loader-scanlines pointer-events-none" aria-hidden />
-      <div className="relative h-full overflow-hidden p-5 sm:p-10 text-[12.5px] sm:text-[14px] leading-[1.7]">
-        {BOOT.slice(0, shown).map((l, i) => (
-          <div key={i} className="whitespace-pre-wrap break-words min-h-[1.7em]">
-            {l.status ? (
-              <>
-                <span className="text-[#7a7a7a]">[ </span>
-                <span className="text-[#5af78e]">{l.status.toUpperCase()}</span>
-                <span className="text-[#7a7a7a]"> ]</span> {l.text}
-              </>
-            ) : (
-              <span className="text-white">{l.text}</span>
-            )}
+      <div className="h-full overflow-hidden px-3 py-2 sm:px-4 sm:py-3 font-[Menlo,Monaco,'SF_Mono',var(--font-geist-mono),monospace] text-[12px] sm:text-[13px] leading-[1.45]">
+        {lines.map((l, i) => (
+          <div key={i} className="whitespace-pre-wrap break-words min-h-[1.45em]">
+            {l.prompt && <span>{l.prompt} </span>}
+            <span className={tone(l.tone)}>{l.text}</span>
           </div>
         ))}
-
-        {shown > 2 && (
-          <div className="mt-4 text-white whitespace-pre">
-            <span className="hidden sm:inline">chargement </span>
-            {bar(display, 24)}
+        {typing && (
+          <div className="whitespace-pre-wrap break-words">
+            <span>{typing.prompt} </span>
+            {typing.text}
+            <span className="term-caret" aria-hidden />
           </div>
         )}
-
-        {done && (
-          <div className="mt-6">
-            <p className="text-[#7a7a7a]">{note ?? "Système prêt."}</p>
-            <p className="mt-1">
-              <span className="text-[#5af78e]">khemara@portfolio</span>
-              <span className="text-[#7a7a7a]">:</span>
-              <span className="text-[#6cb6ff]">~</span>
-              <span className="text-[#7a7a7a]">$ </span>
-              <span className="text-white">Appuyez sur Entrée ou cliquez pour démarrer</span>
-              <span className="term-caret" aria-hidden />
-            </p>
-          </div>
-        )}
+        {!typing && !leaving && step < SCRIPT.length && SCRIPT[step]?.kind !== "type" && <span className="term-caret term-caret--idle" aria-hidden />}
       </div>
+      {note && <p className="absolute bottom-3 left-4 text-[11px] text-[#6b6b6b] font-mono">{note}</p>}
+      <p className={`absolute bottom-3 right-4 text-[11px] text-[#5c5c5c] font-mono transition-opacity duration-500 ${ready && !leaving ? "opacity-100" : "opacity-0"}`} aria-hidden={!ready}>
+        ↵
+      </p>
+      <span className="sr-only" role="status">
+        {ready ? "Appuyez sur Entrée ou cliquez pour ouvrir le portfolio." : "Chargement du portfolio…"}
+      </span>
     </div>
   );
 }

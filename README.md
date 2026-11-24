@@ -8,11 +8,11 @@ Inspired by the concept of [Henry Heffernan's portfolio](https://github.com/henr
 
 ## 🚀 Features
 
-- **Bureau en 3D (Three.js)** : un bureau modélisé entièrement en code (aucun modèle à télécharger), avec un écran 27" façon Studio Display XDR (pied réglable en hauteur), un clavier façon Magic Keyboard et une souris façon Magic Mouse, une lampe d'architecte, une plante, une tasse de café, des livres et un carnet.
+- **Bureau en 3D (Three.js)** : un bureau modélisé entièrement en code (aucun modèle à télécharger), avec un écran 27" façon Studio Display XDR (pied réglable en hauteur), un clavier façon Magic Keyboard (AZERTY, légendes sur les touches) et une souris façon Magic Mouse, une lampe d'architecte, une plante, une tasse de café, des livres et un carnet.
 - **Caméra libre** : on tourne à 360° autour du bureau (glisser) et on zoome / dézoome (molette ou pincement), le bureau restant toujours au centre de l'écran et sans jamais pouvoir passer sous le sol. En sortant de l'écran, on retrouve l'angle où l'on était.
-- **Écran de chargement** façon terminal : journal de démarrage, barre de progression ASCII qui suit le vrai chargement, puis Entrée pour démarrer.
-- **khémaraOS** : en cliquant sur l'écran, la caméra zoome et on utilise un petit OS inspiré de macOS, rendu sur l'écran via `CSS3DRenderer` : barre des menus, Dock avec effet de loupe, fenêtres déplaçables et redimensionnables, icônes sur le bureau.
-- **Applications** : Finder (projets, documents, applications, corbeille), Safari (pages des projets), Notes (à propos, compétences, liens), Aperçu (CV), Mail (contact), Moniteur d'activité (contributions GitHub), Terminal (`help`, `ls`, `cat`, `open`, `lampe`…), et la fenêtre « À propos de ce Mac ».
+- **Écran de chargement** façon vraie session de terminal (zsh, `npm run start`, logs Next.js) : l'étape de compilation attend le vrai chargement de la scène 3D, puis on valide la dernière commande avec Entrée ou un clic.
+- **khémaraOS** : en cliquant sur l'écran, la caméra zoome et on utilise un petit OS inspiré de macOS, rendu sur l'écran via `CSS3DRenderer` : barre des menus, Dock avec effet de loupe et rebond au lancement, fenêtres déplaçables et redimensionnables, icônes sur le bureau.
+- **Applications** : Finder (projets, documents, applications, corbeille), Safari (pages des projets), Notes (à propos, compétences, liens), Aperçu (CV), Mail (contact), Terminal (`help`, `ls`, `cat`, `open`, `lampe`…), et la fenêtre « À propos de ce Mac ».
 - **Lampe de bureau** : elle s'allume et s'éteint d'un clic et éclaire la tasse et le carnet.
 - **Mobile** : sur petit écran, l'ordinateur s'ouvre en plein écran avec une mise en page adaptée.
 - **Accessible et indexable** : contenu texte caché pour les lecteurs d'écran et les moteurs de recherche, pages d'articles statiques (`/blog/[slug]`), repli 2D si WebGL n'est pas disponible, respect de `prefers-reduced-motion`.

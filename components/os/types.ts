@@ -7,7 +7,7 @@ export interface PostSummary {
   content: string;
 }
 
-export type AppId = "finder" | "safari" | "notes" | "preview" | "mail" | "terminal" | "activity" | "about";
+export type AppId = "finder" | "safari" | "notes" | "preview" | "mail" | "terminal" | "about";
 
 export interface WindowState {
   id: AppId;

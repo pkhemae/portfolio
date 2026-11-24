@@ -6,7 +6,24 @@ import type { AppId } from "./types";
  * Every icon is drawn in a 100×100 box on the standard macOS icon grid.
  */
 
-const SQUIRCLE = "M50 6c30 0 44 4 44 44s-14 44-44 44S6 80 6 50 20 6 50 6z";
+/**
+ * macOS icon grid: the shape covers ~80% of the canvas, with a continuous
+ * ("squircle") corner of ~22% of its size.
+ */
+const SQUIRCLE = (() => {
+  // Superellipse |x|^n + |y|^n = 1, centered in the 100×100 box, 80 wide.
+  const n = 5;
+  const pts: string[] = [];
+  for (let i = 0; i < 96; i++) {
+    const t = (i / 96) * Math.PI * 2;
+    const c = Math.cos(t);
+    const s = Math.sin(t);
+    const x = 50 + 40 * Math.sign(c) * Math.pow(Math.abs(c), 2 / n);
+    const y = 50 + 40 * Math.sign(s) * Math.pow(Math.abs(s), 2 / n);
+    pts.push(`${x.toFixed(2)} ${y.toFixed(2)}`);
+  }
+  return `M${pts.join("L")}Z`;
+})();
 
 function useIds(n: number) {
   const base = useId().replace(/:/g, "");
@@ -66,16 +83,16 @@ function Safari({ size }: { size: number }) {
         </radialGradient>
       </defs>
       <path d={SQUIRCLE} fill={`url(#${bg})`} stroke="rgba(0,0,0,0.1)" strokeWidth="0.8" />
-      <circle cx="50" cy="50" r="36" fill={`url(#${dial})`} />
+      <circle cx="50" cy="50" r="33" fill={`url(#${dial})`} />
       {Array.from({ length: 60 }).map((_, i) => {
         const a = (i / 60) * Math.PI * 2;
         const long = i % 5 === 0;
-        const r1 = long ? 29 : 31;
-        return <line key={i} x1={50 + Math.cos(a) * r1} y1={50 + Math.sin(a) * r1} x2={50 + Math.cos(a) * 34} y2={50 + Math.sin(a) * 34} stroke="#fff" strokeWidth={long ? 1.4 : 0.7} opacity="0.85" />;
+        const r1 = long ? 26.5 : 28.5;
+        return <line key={i} x1={50 + Math.cos(a) * r1} y1={50 + Math.sin(a) * r1} x2={50 + Math.cos(a) * 31} y2={50 + Math.sin(a) * 31} stroke="#fff" strokeWidth={long ? 1.4 : 0.7} opacity="0.85" />;
       })}
       <g transform="rotate(45 50 50)">
-        <path d="M50 22 L55 50 L45 50 Z" fill="#ff3b30" />
-        <path d="M50 78 L55 50 L45 50 Z" fill="#ffffff" />
+        <path d="M50 25 L54.5 50 L45.5 50 Z" fill="#ff3b30" />
+        <path d="M50 75 L54.5 50 L45.5 50 Z" fill="#ffffff" />
       </g>
       <circle cx="50" cy="50" r="2" fill="#fff" />
     </Frame>
@@ -133,8 +150,8 @@ function Preview({ size }: { size: number }) {
         <path d="M22 60l12-14 8 8 10-12 14 18z" fill="#3fa34d" />
         <circle cx="56" cy="34" r="4" fill="#ffd23f" />
       </g>
-      <circle cx="62" cy="60" r="15" fill={`url(#${glass})`} stroke="#3a3a3c" strokeWidth="4" />
-      <path d="M73 71l12 12" stroke="#3a3a3c" strokeWidth="7" strokeLinecap="round" />
+      <circle cx="60" cy="58" r="14" fill={`url(#${glass})`} stroke="#3a3a3c" strokeWidth="4" />
+      <path d="M70 68l11 11" stroke="#3a3a3c" strokeWidth="7" strokeLinecap="round" />
     </Frame>
   );
 }
@@ -172,32 +189,9 @@ function Terminal({ size }: { size: number }) {
         </linearGradient>
       </defs>
       <path d={SQUIRCLE} fill={`url(#${frame})`} />
-      <rect x="13" y="15" width="74" height="70" rx="9" fill="#1b1b1d" />
-      <path d="M22 28l9 7-9 7" stroke="#f2f2f2" strokeWidth="3.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M35 43h12" stroke="#f2f2f2" strokeWidth="3.6" strokeLinecap="round" />
-    </Frame>
-  );
-}
-
-function ActivityMonitor({ size }: { size: number }) {
-  const [frame] = useIds(1);
-  return (
-    <Frame size={size}>
-      <defs>
-        <linearGradient id={frame} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#d4d4d6" />
-          <stop offset="1" stopColor="#9c9ca1" />
-        </linearGradient>
-      </defs>
-      <path d={SQUIRCLE} fill={`url(#${frame})`} />
-      <rect x="13" y="15" width="74" height="70" rx="9" fill="#141415" />
-      {[32, 50, 68].map((y) => (
-        <line key={y} x1="18" y1={y} x2="82" y2={y} stroke="#1f3a24" strokeWidth="1" />
-      ))}
-      {[34, 50, 66].map((x) => (
-        <line key={x} x1={x} y1="19" x2={x} y2="81" stroke="#1f3a24" strokeWidth="1" />
-      ))}
-      <path d="M17 56h14l5-16 8 30 7-24 5 10h27" stroke="#3ce35a" strokeWidth="3.2" fill="none" strokeLinejoin="round" strokeLinecap="round" />
+      <rect x="14" y="16" width="72" height="68" rx="11" fill="#1b1b1d" />
+      <path d="M23 29l9 7-9 7" stroke="#f2f2f2" strokeWidth="3.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M36 44h12" stroke="#f2f2f2" strokeWidth="3.6" strokeLinecap="round" />
     </Frame>
   );
 }
@@ -259,8 +253,6 @@ export function AppIcon({ app, size = 48 }: { app: AppId | "trash" | "trash-full
       return <Mail size={size} />;
     case "terminal":
       return <Terminal size={size} />;
-    case "activity":
-      return <ActivityMonitor size={size} />;
     case "about":
       return <SystemInfo size={size} />;
     case "trash":

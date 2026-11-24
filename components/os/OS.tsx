@@ -8,7 +8,7 @@ import Finder from "./apps/Finder";
 import Safari from "./apps/Safari";
 import Notes from "./apps/Notes";
 import Terminal from "./apps/Terminal";
-import { About, Activity, Mail, Preview } from "./apps/Small";
+import { About, Mail, Preview } from "./apps/Small";
 import type { AppId, OSApi, PostSummary, WindowState } from "./types";
 
 interface OSProps {
@@ -142,8 +142,6 @@ export default function OS({ posts, compact = false, width, height, powered, dar
         return <Mail />;
       case "terminal":
         return <Terminal api={api} />;
-      case "activity":
-        return <Activity api={api} />;
       case "about":
         return <About api={api} />;
     }
@@ -321,9 +319,10 @@ export default function OS({ posts, compact = false, width, height, powered, dar
 /* ------------------------------------------------------------------------ */
 
 function Dock({ compact, running, getScale, onOpen, onTrash }: { compact: boolean; running: AppId[]; getScale: () => number; onOpen: (app: AppId) => void; onTrash: () => void }) {
-  const base = compact ? 42 : 50;
+  const base = compact ? 48 : 58;
   const [mouseX, setMouseX] = useState<number | null>(null);
   const [hover, setHover] = useState<string | null>(null);
+  const [launching, setLaunching] = useState<string | null>(null);
   const centers = useRef<number[]>([]);
   const refs = useRef<(HTMLElement | null)[]>([]);
 
@@ -339,15 +338,18 @@ function Dock({ compact, running, getScale, onOpen, onTrash }: { compact: boolea
   const sizeFor = (i: number) => {
     if (compact || mouseX === null || !centers.current[i]) return base;
     const dist = Math.abs(mouseX - centers.current[i]) / (getScale() || 1);
-    const k = Math.max(0, 1 - dist / 150);
-    return Math.round(base * (1 + 0.55 * Math.sin((k * Math.PI) / 2)));
+    // Same falloff as the macOS Dock: neighbours grow too, on a smooth curve.
+    const k = Math.max(0, 1 - dist / 170);
+    return Math.round(base * (1 + 0.6 * (0.5 - 0.5 * Math.cos(k * Math.PI))));
   };
 
   const entries: { key: AppId | "trash"; label: string }[] = [...DOCK.map((id) => ({ key: id, label: APPS[id].name })), { key: "trash", label: "Corbeille" }];
 
   return (
     <nav
-      className="dock absolute left-1/2 -translate-x-1/2 bottom-[6px] z-[9000] flex items-end px-[6px] py-[5px]"
+      className="dock absolute left-1/2 -translate-x-1/2 bottom-[4px] z-[9000] flex items-end px-[4px] pb-[2px]"
+      // Fixed height: magnified icons grow upwards out of the Dock, like on macOS.
+      style={{ height: base + 4 }}
       onPointerEnter={(e) => {
         if (mouseX === null) measure();
         setMouseX(e.clientX);
@@ -363,21 +365,32 @@ function Dock({ compact, running, getScale, onOpen, onTrash }: { compact: boolea
         const isTrash = it.key === "trash";
         return (
           <div key={it.key} className="flex items-end">
-            {isTrash && <span className="dock-sep self-stretch mx-[6px] my-1" />}
+            {isTrash && <span className="dock-sep self-stretch mx-[5px] my-2" />}
             <button
               ref={(el) => {
                 refs.current[i] = el;
               }}
               type="button"
-              onClick={() => (isTrash ? onTrash() : onOpen(it.key as AppId))}
+              onClick={() => {
+                if (isTrash) return onTrash();
+                const app = it.key as AppId;
+                // Apps bounce while they "launch", like on macOS.
+                if (!running.includes(app)) {
+                  setLaunching(app);
+                  setTimeout(() => setLaunching((l) => (l === app ? null : l)), 1300);
+                }
+                onOpen(app);
+              }}
               onPointerEnter={() => setHover(it.key)}
-              className="dock-item relative flex flex-col items-center mx-[3px]"
+              className={`dock-item relative flex flex-col items-center ${launching === it.key ? "is-launching" : ""}`}
               style={{ width: s, height: s }}
               aria-label={it.label}
             >
-              {hover === it.key && !compact && <span className="dock-tooltip absolute bottom-full mb-3 whitespace-nowrap">{it.label}</span>}
-              <AppIcon app={isTrash ? "trash-full" : (it.key as AppId)} size={s} />
-              {!isTrash && <span className={`dock-dot absolute -bottom-[4px] ${running.includes(it.key as AppId) ? "opacity-100" : "opacity-0"}`} />}
+              {!compact && <span className={`dock-tooltip absolute bottom-full mb-1 whitespace-nowrap ${hover === it.key ? "is-visible" : ""}`}>{it.label}</span>}
+              <span className="dock-icon block">
+                <AppIcon app={isTrash ? "trash-full" : (it.key as AppId)} size={s} />
+              </span>
+              {!isTrash && <span className={`dock-dot absolute bottom-[0px] ${running.includes(it.key as AppId) ? "opacity-100" : "opacity-0"}`} />}
             </button>
           </div>
         );

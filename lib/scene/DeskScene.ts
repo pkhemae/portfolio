@@ -380,7 +380,8 @@ export class DeskScene {
     const { screenCenter, screenNormal } = this.monitor;
     const aspect = this.camera.aspect;
     const vfov = THREE.MathUtils.degToRad(this.camera.fov);
-    const margin = 1.04;
+    // Leave some room around the display so the page breathes.
+    const margin = 1.24;
     const dh = ((SCREEN.height * margin) / 2) / Math.tan(vfov / 2);
     const dw = ((SCREEN.width * margin) / 2) / (Math.tan(vfov / 2) * aspect);
     const d = Math.max(dh, dw);

@@ -49,9 +49,8 @@ export const APPS: Record<AppId, AppMeta> = {
   preview: { id: "preview", name: "Aperçu", w: 540, h: 690, minW: 360, minH: 360 },
   mail: { id: "mail", name: "Mail", w: 620, h: 470, minW: 440, minH: 340 },
   terminal: { id: "terminal", name: "Terminal", w: 660, h: 410, minW: 400, minH: 220 },
-  activity: { id: "activity", name: "Moniteur d'activité", w: 840, h: 400, minW: 560, minH: 300 },
   about: { id: "about", name: "À propos de ce Mac", w: 330, h: 450, resizable: false },
 };
 
 /** Apps in the Dock, in order. */
-export const DOCK: AppId[] = ["finder", "safari", "notes", "preview", "mail", "activity", "terminal"];
+export const DOCK: AppId[] = ["finder", "safari", "notes", "preview", "mail", "terminal"];

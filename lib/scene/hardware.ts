@@ -31,6 +31,45 @@ function cylinderBetween(a: THREE.Vector3, b: THREE.Vector3, r: number, mat: THR
   return mesh;
 }
 
+/**
+ * Flat slab with rounded corners in its front plane only and straight,
+ * barely softened sides (like a display enclosure). Centered on its origin,
+ * thickness along Z.
+ */
+function roundedRect(w: number, h: number, r: number) {
+  const x = w / 2;
+  const y = h / 2;
+  const shape = new THREE.Shape();
+  shape.moveTo(-x + r, -y);
+  shape.lineTo(x - r, -y);
+  shape.quadraticCurveTo(x, -y, x, -y + r);
+  shape.lineTo(x, y - r);
+  shape.quadraticCurveTo(x, y, x - r, y);
+  shape.lineTo(-x + r, y);
+  shape.quadraticCurveTo(-x, y, -x, y - r);
+  shape.lineTo(-x, -y + r);
+  shape.quadraticCurveTo(-x, -y, -x + r, -y);
+  return shape;
+}
+
+function slab(w: number, h: number, d: number, r: number, mat: THREE.Material) {
+  const bevel = 0.0006;
+  const shape = roundedRect(w - bevel * 2, h - bevel * 2, r - bevel);
+  const geom = new THREE.ExtrudeGeometry(shape, {
+    depth: d - bevel * 2,
+    bevelEnabled: true,
+    bevelThickness: bevel,
+    bevelSize: bevel,
+    bevelSegments: 2,
+    curveSegments: 10,
+  });
+  geom.translate(0, 0, -(d - bevel * 2) / 2);
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
 /* ------------------------------------------------------------------------ */
 /* Display                                                                   */
 /* ------------------------------------------------------------------------ */
@@ -82,13 +121,13 @@ export function createDisplay(): DisplayParts {
   const D = 0.024;
   const centerY = 0.06; // head center relative to the hinge
   const BZ = D / 2 + 0.004; // body sits just in front of the hinge
-  const body = rbox(W, H, D, 0.011, alu, 5);
+  const body = slab(W, H, D, 0.009, alu);
   body.position.set(0, centerY, BZ);
   head.add(body);
 
   const front = BZ + D / 2;
   const bezelMat = new THREE.MeshStandardMaterial({ color: "#050506", roughness: 0.08, metalness: 0.2 });
-  const bezel = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.007, H - 0.007), bezelMat);
+  const bezel = new THREE.Mesh(new THREE.ShapeGeometry(roundedRect(W - 0.004, H - 0.004, 0.007), 10), bezelMat);
   bezel.position.set(0, centerY, front + 0.0003);
   head.add(bezel);
 
@@ -166,6 +205,74 @@ export function createStickyNote() {
   return note;
 }
 
+/** Key legends: a string, or [upper, lower] for two-symbol keys. */
+type Legend = string | [string, string] | { sym: string; word: string; align?: "left" | "right" } | null;
+
+// French (AZERTY) layout of a compact wireless keyboard with Touch ID.
+const KEY_ROWS: { w: number; h?: number; legend: Legend }[][] = [
+  [
+    { w: 15 / 14, h: 0.55, legend: "esc" },
+    ...["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"].map((f) => ({ w: 15 / 14, h: 0.55, legend: `fn:${f}` })),
+    { w: 15 / 14, h: 0.55, legend: "touchid" },
+  ],
+  [
+    ...(
+      [
+        ["#", "@"],
+        ["1", "&"],
+        ["2", "é"],
+        ["3", '"'],
+        ["4", "'"],
+        ["5", "("],
+        ["6", "§"],
+        ["7", "è"],
+        ["8", "!"],
+        ["9", "ç"],
+        ["0", "à"],
+        ["°", ")"],
+        ["_", "-"],
+      ] as [string, string][]
+    ).map((l) => ({ w: 1, legend: l })),
+    { w: 2, legend: { sym: "⌫", word: "", align: "right" } },
+  ],
+  [
+    { w: 1.5, legend: { sym: "⇥", word: "", align: "left" } },
+    ..."AZERTYUIOP".split("").map((c) => ({ w: 1, legend: c })),
+    { w: 1, legend: ["¨", "^"] },
+    { w: 1, legend: ["*", "$"] },
+    { w: 1.5, legend: ["£", "`"] },
+  ],
+  [
+    { w: 1.8, legend: { sym: "⇪", word: "", align: "left" } },
+    ..."QSDFGHJKLM".split("").map((c) => ({ w: 1, legend: c })),
+    { w: 1, legend: ["%", "ù"] },
+    { w: 2.2, legend: { sym: "↩", word: "", align: "right" } },
+  ],
+  [
+    { w: 2.35, legend: { sym: "⇧", word: "", align: "left" } },
+    ..."WXCVBN".split("").map((c) => ({ w: 1, legend: c })),
+    { w: 1, legend: ["?", ","] },
+    { w: 1, legend: [".", ";"] },
+    { w: 1, legend: ["/", ":"] },
+    { w: 1, legend: ["+", "="] },
+    { w: 2.65, legend: { sym: "⇧", word: "", align: "right" } },
+  ],
+  [
+    { w: 1, legend: { sym: "fn", word: "◎", align: "left" } },
+    { w: 1, legend: { sym: "⌃", word: "control", align: "right" } },
+    { w: 1, legend: { sym: "⌥", word: "option", align: "right" } },
+    { w: 1.25, legend: { sym: "⌘", word: "command", align: "right" } },
+    { w: 5.5, legend: null },
+    { w: 1.25, legend: { sym: "⌘", word: "command", align: "left" } },
+    { w: 1, legend: { sym: "⌥", word: "option", align: "left" } },
+    { w: 1, legend: "◀" },
+    { w: 1, legend: "updown" },
+    { w: 1, legend: "▶" },
+  ],
+];
+
+const KEY_FONT = "-apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif";
+
 export function createKeyboard() {
   const group = new THREE.Group();
   group.position.set(-0.05, DESK_TOP + 0.003, 0.17);
@@ -185,38 +292,121 @@ export function createKeyboard() {
   const keyGeom = new RoundedBoxGeometry(1, 1, 1, 2, 0.2);
   const u = W / 15.6;
   const gap = u * 0.13;
-  const rows: { w: number; h?: number }[][] = [
-    Array(14).fill({ w: 15 / 14, h: 0.55 }),
-    [...Array(13).fill({ w: 1 }), { w: 2 }],
-    [{ w: 1.5 }, ...Array(12).fill({ w: 1 }), { w: 1.5 }],
-    [{ w: 1.8 }, ...Array(11).fill({ w: 1 }), { w: 2.2 }],
-    [{ w: 2.35 }, ...Array(10).fill({ w: 1 }), { w: 2.65 }],
-    [{ w: 1 }, { w: 1 }, { w: 1 }, { w: 1.25 }, { w: 5.5 }, { w: 1.25 }, { w: 1 }, { w: 1 }, { w: 1 }, { w: 1 }],
-  ];
+  const keyTop = 0.0075 / 2 + 0.0006 + 0.0008;
+
+  // Legends are painted on one transparent canvas laid over the key tops.
+  const S = 9000; // canvas pixels per meter
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(W * S);
+  canvas.height = Math.round(Dp * S);
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#3b3b3f";
+  ctx.strokeStyle = "#3b3b3f";
+  ctx.textBaseline = "middle";
+  const px = (x: number) => (x + W / 2) * S;
+  const pz = (z: number) => (z + Dp / 2) * S;
+
+  const drawLegend = (legend: Legend, x0: number, z0: number, w: number, h: number) => {
+    if (!legend) return;
+    const cx = px(x0 + w / 2);
+    const cy = pz(z0 + h / 2);
+    const kw = (w - gap) * S;
+    const kh = (h - gap) * S;
+    const left = px(x0 + gap / 2) + kw * 0.12;
+    const right = px(x0 + w - gap / 2) - kw * 0.12;
+    if (typeof legend === "string") {
+      if (legend === "touchid") {
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(cx, cy, kh * 0.32, 0, Math.PI * 2);
+        ctx.strokeStyle = "#b9b9be";
+        ctx.stroke();
+        ctx.strokeStyle = "#3b3b3f";
+        return;
+      }
+      if (legend === "updown") {
+        ctx.textAlign = "center";
+        ctx.font = `${Math.round(kh * 0.16)}px ${KEY_FONT}`;
+        ctx.fillText("▲", cx, cy - kh * 0.25);
+        ctx.fillText("▼", cx, cy + kh * 0.25);
+        return;
+      }
+      if (legend.startsWith("fn:")) {
+        ctx.textAlign = "center";
+        ctx.font = `${Math.round(kh * 0.36)}px ${KEY_FONT}`;
+        ctx.fillText(legend.slice(3), cx, cy + kh * 0.08);
+        return;
+      }
+      ctx.textAlign = "center";
+      const big = legend.length === 1 && /[A-Z]/.test(legend);
+      ctx.font = `${big ? 500 : 400} ${Math.round(kh * (big ? 0.36 : legend.length > 2 ? 0.3 : 0.26))}px ${KEY_FONT}`;
+      ctx.fillText(legend, cx, cy + (h < u ? kh * 0.08 : 0));
+      return;
+    }
+    if (Array.isArray(legend)) {
+      ctx.textAlign = "center";
+      ctx.font = `400 ${Math.round(kh * 0.26)}px ${KEY_FONT}`;
+      ctx.fillText(legend[0], cx, cy - kh * 0.2);
+      ctx.fillText(legend[1], cx, cy + kh * 0.2);
+      return;
+    }
+    // Modifier: symbol at the top, word at the bottom.
+    ctx.textAlign = legend.align === "left" ? "left" : "right";
+    const tx = legend.align === "left" ? left : right;
+    ctx.font = `400 ${Math.round(kh * 0.28)}px ${KEY_FONT}`;
+    ctx.fillText(legend.sym, tx, legend.word ? cy - kh * 0.2 : cy + kh * 0.18);
+    if (legend.word) {
+      ctx.font = `400 ${Math.round(kh * 0.17)}px ${KEY_FONT}`;
+      ctx.fillText(legend.word, tx, cy + kh * 0.24);
+    }
+  };
+
   const totalW = 15 * u;
   let z = -Dp / 2 + 0.008;
-  rows.forEach((row, r) => {
+  KEY_ROWS.forEach((row, r) => {
     const rowH = (row[0].h ?? 1) * u;
     let x = -totalW / 2;
     row.forEach((k, i) => {
       const w = k.w * u;
       // Inverted-T arrows: the up/down slot is split in two half keys.
-      const isUpDown = r === rows.length - 1 && i === 8;
-      const parts = isUpDown ? [-0.25, 0.25] : [0];
+      const isUpDown = r === KEY_ROWS.length - 1 && i === 8;
+      // Left / right arrows are half-height keys sitting at the bottom.
+      const isSideArrow = r === KEY_ROWS.length - 1 && (i === 7 || i === 9);
+      const parts = isUpDown ? [-0.25, 0.25] : isSideArrow ? [0.25] : [0];
       for (const off of parts) {
         const key = new THREE.Mesh(keyGeom, keyMat);
-        const h = isUpDown ? rowH / 2 : rowH;
+        const h = isUpDown || isSideArrow ? rowH / 2 : rowH;
         key.scale.set(w - gap, 0.0016, h - gap);
         key.position.set(x + w / 2, 0.0075 / 2 + 0.0006, z + rowH / 2 + off * rowH);
         key.castShadow = false;
         key.receiveShadow = true;
         deck.add(key);
       }
+      if (isSideArrow) {
+        drawLegend(k.legend, x, z + rowH / 2, w, rowH / 2);
+      } else {
+        drawLegend(k.legend, x, z, w, rowH);
+      }
       x += w;
     });
     z += rowH;
   });
-  return shadowed(group);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  const legends = new THREE.Mesh(
+    new THREE.PlaneGeometry(W, Dp),
+    new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.5, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
+  );
+  legends.rotation.x = -Math.PI / 2;
+  legends.position.y = keyTop + 0.00005;
+  legends.receiveShadow = true;
+  deck.add(legends);
+
+  shadowed(group);
+  legends.castShadow = false;
+  return group;
 }
 
 /**

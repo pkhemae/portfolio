@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import GithubContributions from "../../GithubContributions";
 import { Glyph } from "../Icons";
 import { PROFILE } from "../profile";
 import type { OSApi } from "../types";
@@ -93,37 +92,6 @@ export function Mail() {
         placeholder="Écrivez votre message… puis cliquez sur l'avion en papier pour l'envoyer avec votre messagerie."
         className="flex-1 min-h-0 resize-none bg-transparent outline-none p-4 text-[14px] leading-relaxed"
       />
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------------ */
-/* Moniteur d'activité (GitHub)                                              */
-/* ------------------------------------------------------------------------ */
-
-export function Activity({ api }: { api: OSApi }) {
-  return (
-    <div className="flex flex-col h-full min-h-0 mac-content">
-      <Toolbar leftInset>
-        <div className="min-w-0">
-          <p className="text-[13px] font-semibold leading-tight truncate">Moniteur d&apos;activité</p>
-          <p className="text-[11px] mac-text-3 leading-tight">Contributions GitHub · 12 derniers mois</p>
-        </div>
-        <div className="flex-1" />
-        {!api.compact && (
-          <div className="segmented" data-no-drag>
-            <button type="button" className="is-on px-3 text-[12px]">Commits</button>
-            <button type="button" className="px-3 text-[12px]" disabled>Mémoire</button>
-            <button type="button" className="px-3 text-[12px]" disabled>Réseau</button>
-          </div>
-        )}
-      </Toolbar>
-      <div className="flex-1 min-h-0 overflow-auto mac-scroll p-6">
-        <GithubContributions />
-        <a href={PROFILE.github} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-1.5 text-[13px] mac-accent-text">
-          Voir mon profil GitHub <Glyph name="external" size={13} />
-        </a>
-      </div>
     </div>
   );
 }
