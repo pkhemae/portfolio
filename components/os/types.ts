@@ -7,12 +7,10 @@ export interface PostSummary {
   content: string;
 }
 
-export type AppId = "about" | "projects" | "cv" | "skills" | "github" | "contact" | "terminal" | "post";
+export type AppId = "finder" | "safari" | "notes" | "preview" | "mail" | "terminal" | "activity" | "about";
 
 export interface WindowState {
-  id: string;
-  app: AppId;
-  title: string;
+  id: AppId;
   x: number;
   y: number;
   w: number;
@@ -20,12 +18,19 @@ export interface WindowState {
   z: number;
   minimized: boolean;
   maximized: boolean;
-  /** Extra payload (e.g. post slug for the "post" app). */
+  /** App specific location (Finder folder, Safari page, note id…). */
   payload?: string;
+  /** Bumped each time the app is asked to open `payload`, even if unchanged. */
+  nav: number;
 }
 
-export interface OSContextValue {
+/** Actions every app can use. */
+export interface OSApi {
   posts: PostSummary[];
-  openApp: (app: AppId, payload?: string) => void;
   compact: boolean;
+  dark: boolean;
+  openApp: (app: AppId, payload?: string) => void;
+  toggleNight?: () => void;
+  toggleLamp?: () => void;
+  leave?: () => void;
 }

@@ -2,13 +2,21 @@
 
 import { useRef } from "react";
 import type { WindowState } from "./types";
-import { AppIcon } from "./Icons";
+
+export const MENU_H = 26;
+export const DOCK_SPACE = 74;
 
 interface WindowProps {
   win: WindowState;
+  title?: string;
+  /** "titlebar": classic title bar. "unified": the app draws its own toolbar (mark drag areas with data-drag). */
+  chrome?: "titlebar" | "unified";
   focused: boolean;
   compact: boolean;
-  /** Returns the ratio between on-screen pixels and the OS virtual pixels. */
+  resizable?: boolean;
+  minW?: number;
+  minH?: number;
+  /** Ratio between on-screen pixels and OS virtual pixels. */
   getScale: () => number;
   bounds: { w: number; h: number };
   onFocus: () => void;
@@ -19,15 +27,33 @@ interface WindowProps {
   children: React.ReactNode;
 }
 
-const MIN_W = 300;
-const MIN_H = 180;
-const TOP = 32; // menu bar height
-const BOTTOM = 58; // dock area
+type DragMode = "move" | "e" | "s" | "se";
+
+export function TrafficLights({ focused, onClose, onMinimize, onZoom, canZoom = true }: { focused: boolean; onClose: () => void; onMinimize: () => void; onZoom: () => void; canZoom?: boolean }) {
+  return (
+    <div className={`traffic flex items-center gap-2 ${focused ? "" : "traffic--blur"}`} data-no-drag>
+      <button type="button" className="traffic-btn traffic-close" aria-label="Fermer" onClick={onClose}>
+        <svg viewBox="0 0 12 12"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" /></svg>
+      </button>
+      <button type="button" className="traffic-btn traffic-min" aria-label="Réduire dans le Dock" onClick={onMinimize}>
+        <svg viewBox="0 0 12 12"><path d="M3 6h6" /></svg>
+      </button>
+      <button type="button" className="traffic-btn traffic-zoom" aria-label="Agrandir" onClick={onZoom} disabled={!canZoom}>
+        <svg viewBox="0 0 12 12"><path d="M4 8V4.6L7.4 8zM8 4v3.4L4.6 4z" fill="currentColor" stroke="none" /></svg>
+      </button>
+    </div>
+  );
+}
 
 export default function Window({
   win,
+  title,
+  chrome = "titlebar",
   focused,
   compact,
+  resizable = true,
+  minW = 320,
+  minH = 200,
   getScale,
   bounds,
   onFocus,
@@ -37,19 +63,21 @@ export default function Window({
   onChange,
   children,
 }: WindowProps) {
-  const drag = useRef<{ mode: "move" | "resize"; sx: number; sy: number; ox: number; oy: number; ow: number; oh: number; scale: number } | null>(null);
-
+  const drag = useRef<{ mode: DragMode; sx: number; sy: number; ox: number; oy: number; ow: number; oh: number; scale: number } | null>(null);
   const maximized = win.maximized || compact;
 
-  const startDrag = (mode: "move" | "resize") => (e: React.PointerEvent) => {
-    if (maximized && mode === "resize") return;
-    if (e.button !== 0) return;
-    if ((e.target as HTMLElement).closest("[data-no-drag]")) return;
+  const begin = (mode: DragMode, e: React.PointerEvent) => {
     e.preventDefault();
-    onFocus();
-    if (maximized) return;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     drag.current = { mode, sx: e.clientX, sy: e.clientY, ox: win.x, oy: win.y, ow: win.w, oh: win.h, scale: getScale() || 1 };
+  };
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    onFocus();
+    if (e.button !== 0 || maximized) return;
+    const t = e.target as HTMLElement;
+    if (!t.closest("[data-drag]") || t.closest("button, a, input, textarea, [data-no-drag]")) return;
+    begin("move", e);
   };
 
   const onMove = (e: React.PointerEvent) => {
@@ -58,92 +86,65 @@ export default function Window({
     const dx = (e.clientX - d.sx) / d.scale;
     const dy = (e.clientY - d.sy) / d.scale;
     if (d.mode === "move") {
-      const x = Math.min(Math.max(d.ox + dx, -d.ow + 80), bounds.w - 80);
-      const y = Math.min(Math.max(d.oy + dy, TOP), bounds.h - BOTTOM - 30);
-      onChange({ x, y });
-    } else {
       onChange({
-        w: Math.max(MIN_W, Math.min(d.ow + dx, bounds.w - d.ox)),
-        h: Math.max(MIN_H, Math.min(d.oh + dy, bounds.h - BOTTOM - d.oy)),
+        x: Math.min(Math.max(d.ox + dx, -d.ow + 100), bounds.w - 100),
+        y: Math.min(Math.max(d.oy + dy, MENU_H), bounds.h - 60),
       });
+      return;
     }
+    const patch: Partial<WindowState> = {};
+    if (d.mode === "e" || d.mode === "se") patch.w = Math.max(minW, Math.min(d.ow + dx, bounds.w - d.ox));
+    if (d.mode === "s" || d.mode === "se") patch.h = Math.max(minH, Math.min(d.oh + dy, bounds.h - d.oy - 8));
+    onChange(patch);
   };
 
-  const endDrag = (e: React.PointerEvent) => {
-    if (drag.current) {
-      (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
-      drag.current = null;
-    }
+  const end = (e: React.PointerEvent) => {
+    if (!drag.current) return;
+    (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+    drag.current = null;
+  };
+
+  const onDoubleClick = (e: React.MouseEvent) => {
+    const t = e.target as HTMLElement;
+    if (compact || !resizable) return;
+    if (t.closest("[data-drag]") && !t.closest("button, a, input, textarea, [data-no-drag]")) onToggleMaximize();
   };
 
   const style: React.CSSProperties = maximized
-    ? { left: 0, top: TOP, width: bounds.w, height: bounds.h - TOP - BOTTOM, zIndex: win.z }
+    ? { left: 0, top: MENU_H, width: bounds.w, height: bounds.h - MENU_H - (compact ? 70 : DOCK_SPACE), zIndex: win.z }
     : { left: win.x, top: win.y, width: win.w, height: win.h, zIndex: win.z };
+
+  const handle = (mode: DragMode, cls: string) =>
+    resizable && !maximized ? (
+      <div className={`absolute ${cls}`} onPointerDown={(e) => { e.stopPropagation(); onFocus(); begin(mode, e); }} onPointerMove={onMove} onPointerUp={end} onPointerCancel={end} aria-hidden />
+    ) : null;
 
   return (
     <section
       role="dialog"
-      aria-label={win.title}
-      onPointerDown={onFocus}
-      className={`os-window absolute flex flex-col bg-white ${maximized ? "" : "rounded-[3px]"} ${
-        focused ? "os-window--focused" : ""
-      } ${win.minimized ? "os-window--minimized" : ""}`}
+      aria-label={title}
+      className={`mac-window absolute flex flex-col ${maximized ? "mac-window--max" : ""} ${focused ? "mac-window--focused" : ""} ${win.minimized ? "mac-window--min" : ""}`}
       style={style}
+      onPointerDown={onPointerDown}
+      onPointerMove={onMove}
+      onPointerUp={end}
+      onPointerCancel={end}
+      onDoubleClick={onDoubleClick}
     >
-      <header
-        className="os-titlebar flex items-center justify-between h-9 shrink-0 px-2.5 select-none cursor-default touch-none"
-        onPointerDown={startDrag("move")}
-        onPointerMove={onMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-        onDoubleClick={() => !compact && onToggleMaximize()}
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="shrink-0 text-neutral-800">
-            <AppIcon app={win.app} size={18} />
-          </span>
-          <span className="font-mono text-[12px] uppercase tracking-wide text-neutral-500 truncate">
-            [ <span className={focused ? "text-neutral-900" : ""}>{win.title}</span> ]
-          </span>
-        </div>
-        <div className="flex items-center gap-0.5 shrink-0" data-no-drag>
-          <button type="button" className="os-winbtn" aria-label="Réduire" onClick={onMinimize}>
-            <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1 5h8" stroke="currentColor" strokeWidth="1.4" /></svg>
-          </button>
-          {!compact && (
-            <button type="button" className="os-winbtn" aria-label={win.maximized ? "Restaurer" : "Agrandir"} onClick={onToggleMaximize}>
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                {win.maximized ? (
-                  <>
-                    <rect x="1" y="3" width="6" height="6" stroke="currentColor" strokeWidth="1.3" />
-                    <path d="M3 3V1h6v6H7" stroke="currentColor" strokeWidth="1.3" />
-                  </>
-                ) : (
-                  <rect x="1" y="1" width="8" height="8" stroke="currentColor" strokeWidth="1.3" />
-                )}
-              </svg>
-            </button>
-          )}
-          <button type="button" className="os-winbtn os-winbtn--close" aria-label="Fermer" onClick={onClose}>
-            <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" strokeWidth="1.4" /></svg>
-          </button>
-        </div>
-      </header>
-      <div className="relative flex-1 min-h-0 overflow-auto os-scroll">{children}</div>
-      {!maximized && (
-        <div
-          className="absolute right-0 bottom-0 w-4 h-4 cursor-nwse-resize touch-none"
-          onPointerDown={startDrag("resize")}
-          onPointerMove={onMove}
-          onPointerUp={endDrag}
-          onPointerCancel={endDrag}
-          aria-hidden
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" className="text-neutral-300">
-            <path d="M14 6L6 14M14 10l-4 4" stroke="currentColor" strokeWidth="1.2" />
-          </svg>
+      {chrome === "titlebar" ? (
+        <header data-drag className="mac-titlebar relative flex items-center h-[30px] shrink-0 px-3 select-none">
+          <TrafficLights focused={focused} onClose={onClose} onMinimize={onMinimize} onZoom={onToggleMaximize} canZoom={resizable && !compact} />
+          <span className="absolute inset-x-24 text-center text-[13px] font-semibold truncate mac-title pointer-events-none">{title}</span>
+        </header>
+      ) : (
+        <div className="absolute left-[14px] top-[16px] z-20">
+          <TrafficLights focused={focused} onClose={onClose} onMinimize={onMinimize} onZoom={onToggleMaximize} canZoom={resizable && !compact} />
         </div>
       )}
+      <div className="relative flex-1 min-h-0 flex flex-col">{children}</div>
+      {handle("e", "top-3 bottom-3 -right-1 w-2 cursor-ew-resize")}
+      {handle("s", "left-3 right-3 -bottom-1 h-2 cursor-ns-resize")}
+      {handle("se", "-right-1 -bottom-1 w-4 h-4 cursor-nwse-resize")}
     </section>
   );
 }

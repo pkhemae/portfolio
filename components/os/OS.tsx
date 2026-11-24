@@ -1,27 +1,34 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Window from "./Window";
-import { AppIcon } from "./Icons";
-import { APPS, PROFILE, appMeta } from "./profile";
-import { AboutApp, ContactApp, CvApp, GithubApp, PostApp, ProjectsApp, SkillsApp, TerminalApp } from "./apps";
-import type { AppId, PostSummary, WindowState } from "./types";
+import Window, { DOCK_SPACE, MENU_H } from "./Window";
+import { AppIcon, FolderIcon, Glyph, Logo, TextFileIcon, ThumbIcon } from "./Icons";
+import { APPS, DOCK, PROFILE } from "./profile";
+import Finder from "./apps/Finder";
+import Safari from "./apps/Safari";
+import Notes from "./apps/Notes";
+import Terminal from "./apps/Terminal";
+import { About, Activity, Mail, Preview } from "./apps/Small";
+import type { AppId, OSApi, PostSummary, WindowState } from "./types";
 import { sound } from "@/lib/sound";
 
 interface OSProps {
   posts: PostSummary[];
-  /** Phone-sized layout: every window is full screen. */
+  /** Phone layout: every window is full screen. */
   compact?: boolean;
   /** Virtual size of the OS in CSS pixels. */
   width: number;
   height: number;
-  /** When false the screen shows a stand-by state; switching to true boots the OS. */
+  /** False shows a sleeping screen; switching to true boots the OS. */
   powered: boolean;
+  /** Dark appearance (follows the room's night mode). */
+  dark?: boolean;
   onLeave?: () => void;
   onToggleNight?: () => void;
+  onToggleLamp?: () => void;
 }
 
-const TOP = 32;
+const MENUS = ["Fichier", "Édition", "Présentation", "Fenêtre", "Aide"];
 
 function useClock() {
   const [now, setNow] = useState<Date | null>(null);
@@ -33,12 +40,14 @@ function useClock() {
   return now;
 }
 
-export default function OS({ posts, compact = false, width, height, powered, onLeave, onToggleNight }: OSProps) {
+export default function OS({ posts, compact = false, width, height, powered, dark = false, onLeave, onToggleNight, onToggleLamp }: OSProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [windows, setWindows] = useState<WindowState[]>([]);
-  const [phase, setPhase] = useState<"off" | "boot" | "on">("off");
+  const [phase, setPhase] = useState<"off" | "boot" | "on">(powered ? "on" : "off");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const zRef = useRef(10);
-  const openCount = useRef(0);
+  const cascade = useRef(0);
   const now = useClock();
 
   const getScale = useCallback(() => {
@@ -53,7 +62,7 @@ export default function OS({ posts, compact = false, width, height, powered, onL
     return visible.reduce((a, b) => (a.z > b.z ? a : b)).id;
   }, [windows]);
 
-  const focus = useCallback((id: string) => {
+  const focus = useCallback((id: AppId) => {
     setWindows((ws) => {
       const top = ws.reduce((m, w) => Math.max(m, w.z), 0);
       const target = ws.find((w) => w.id === id);
@@ -65,60 +74,86 @@ export default function OS({ posts, compact = false, width, height, powered, onL
 
   const openApp = useCallback(
     (app: AppId, payload?: string) => {
-      const id = app === "post" ? `post:${payload}` : app;
+      setMenuOpen(false);
       setWindows((ws) => {
-        const existing = ws.find((w) => w.id === id);
         zRef.current += 1;
+        const existing = ws.find((w) => w.id === app);
         if (existing) {
-          return ws.map((w) => (w.id === id ? { ...w, z: zRef.current, minimized: false } : w));
+          return ws.map((w) => (w.id === app ? { ...w, z: zRef.current, minimized: false, payload: payload ?? w.payload, nav: payload ? w.nav + 1 : w.nav } : w));
         }
-        const meta = appMeta(app);
-        const post = app === "post" ? posts.find((p) => p.slug === payload) : undefined;
-        const w = Math.min(app === "post" ? 820 : meta?.w ?? 720, width - 40);
-        const h = Math.min(app === "post" ? 640 : meta?.h ?? 560, height - TOP - 100);
-        const n = openCount.current++ % 7;
-        const baseX = app === "post" ? 300 : 210;
-        const x = Math.max(20, Math.min(baseX + n * 34, width - w - 20));
-        const y = Math.max(TOP + 10, Math.min(TOP + 34 + n * 26, height - h - 70));
+        const meta = APPS[app];
+        const w = Math.min(meta.w, width - 40);
+        const h = Math.min(meta.h, height - MENU_H - DOCK_SPACE - 20);
+        const n = cascade.current++ % 6;
+        const x = meta.x ?? Math.round((width - w) / 2 - 120 + n * 40);
+        const y = meta.y ?? Math.round(MENU_H + 40 + n * 28);
         return [
           ...ws,
           {
-            id,
-            app,
-            title: post ? post.title : meta?.label ?? app,
-            x,
-            y,
+            id: app,
+            x: Math.max(16, Math.min(x, width - w - 16)),
+            y: Math.max(MENU_H + 8, Math.min(y, height - h - DOCK_SPACE)),
             w,
             h,
             z: zRef.current,
             minimized: false,
             maximized: false,
             payload,
+            nav: 0,
           },
         ];
       });
     },
-    [posts, width, height],
+    [width, height],
   );
 
-  const close = (id: string) => setWindows((ws) => ws.filter((w) => w.id !== id));
-  const patch = (id: string, p: Partial<WindowState>) => setWindows((ws) => ws.map((w) => (w.id === id ? { ...w, ...p } : w)));
+  const close = (id: AppId) => setWindows((ws) => ws.filter((w) => w.id !== id));
+  const patch = (id: AppId, p: Partial<WindowState>) => setWindows((ws) => ws.map((w) => (w.id === id ? { ...w, ...p } : w)));
 
   // Boot sequence.
   useEffect(() => {
     if (!powered || phase !== "off") return;
     setPhase("boot");
-    const t1 = setTimeout(() => sound.chime(), 300);
+    const t1 = setTimeout(() => sound.chime(), 250);
     const t2 = setTimeout(() => {
       setPhase("on");
-      openApp("about");
-    }, 2100);
+      openApp("notes", "about");
+    }, 2300);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [powered]);
+
+  // Already powered when mounted (phone layout): show the welcome note.
+  useEffect(() => {
+    if (powered && phase === "on") openApp("notes", "about");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const api: OSApi = { posts, compact, dark, openApp, toggleNight: onToggleNight, toggleLamp: onToggleLamp, leave: onLeave };
+
+  const renderApp = (w: WindowState) => {
+    switch (w.id) {
+      case "finder":
+        return <Finder api={api} payload={w.payload} nav={w.nav} />;
+      case "safari":
+        return <Safari api={api} payload={w.payload} nav={w.nav} />;
+      case "notes":
+        return <Notes api={api} payload={w.payload} nav={w.nav} />;
+      case "preview":
+        return <Preview api={api} />;
+      case "mail":
+        return <Mail />;
+      case "terminal":
+        return <Terminal api={api} />;
+      case "activity":
+        return <Activity api={api} />;
+      case "about":
+        return <About api={api} />;
+    }
+  };
 
   const onDockClick = (app: AppId) => {
     const w = windows.find((x) => x.id === app);
@@ -127,88 +162,136 @@ export default function OS({ posts, compact = false, width, height, powered, onL
     patch(w.id, { minimized: true });
   };
 
-  const renderApp = (w: WindowState) => {
-    switch (w.app) {
-      case "about":
-        return <AboutApp openApp={openApp} />;
-      case "projects":
-        return <ProjectsApp posts={posts} openPost={(slug) => openApp("post", slug)} />;
-      case "post":
-        return <PostApp post={posts.find((p) => p.slug === w.payload)} />;
-      case "cv":
-        return <CvApp />;
-      case "skills":
-        return <SkillsApp />;
-      case "github":
-        return <GithubApp />;
-      case "contact":
-        return <ContactApp />;
-      case "terminal":
-        return <TerminalApp posts={posts} openApp={openApp} toggleNight={onToggleNight} leave={onLeave} />;
-    }
-  };
+  const activeName = focusedId ? APPS[focusedId].name : "Finder";
 
-  const focusedWin = windows.find((w) => w.id === focusedId);
+  const desktopItems = [
+    { key: "projets", label: "Projets", icon: <FolderIcon size={60} />, open: () => openApp("finder", "projets") },
+    { key: "cv", label: "CV.pdf", icon: <ThumbIcon src="/cv.pdf.png" badge="PDF" size={60} />, open: () => openApp("preview") },
+    { key: "about", label: "À propos.txt", icon: <TextFileIcon size={60} />, open: () => openApp("notes", "about") },
+  ];
 
   return (
     <div
       ref={rootRef}
-      className={`os-root relative overflow-hidden select-none ${compact ? "os-compact" : ""}`}
+      className={`os-root relative overflow-hidden select-none ${dark ? "os-dark" : ""} ${compact ? "os-compact" : ""}`}
       style={{ width, height }}
       onPointerDown={() => sound.click()}
       onKeyDown={(e) => {
         if (!e.repeat) sound.key();
       }}
     >
-      {/* Wallpaper */}
-      <div className="os-wallpaper absolute inset-0" aria-hidden>
-        <div className="absolute right-[6%] bottom-[16%] text-right pointer-events-none">
-          <p className="font-mono text-[12px] tracking-[0.3em] uppercase text-neutral-400 mb-3">portfolio — 2026</p>
-          <p className={`${compact ? "text-[44px]" : "text-[88px]"} font-bold tracking-[-0.04em] leading-[0.9] text-neutral-900/[0.07]`}>
-            Khémara
-            <br />
-            Parc
-          </p>
-        </div>
-        <div className="os-crosshair absolute left-1/2 top-1/2" />
-      </div>
+      <div
+        className="os-wallpaper absolute inset-0"
+        aria-hidden
+        onPointerDown={() => {
+          setSelectedIcon(null);
+          setMenuOpen(false);
+        }}
+      />
 
       {/* Menu bar */}
-      <div className="absolute top-0 inset-x-0 h-8 flex items-center justify-between px-3 bg-white/70 backdrop-blur-md border-b border-neutral-200/70 font-mono text-[12px] text-neutral-600 z-[9000]">
-        <div className="flex items-center gap-4 min-w-0">
-          <button type="button" onClick={() => openApp("about")} className="flex items-center gap-1.5 font-semibold text-neutral-900 hover:text-[#1D2DFF]">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#1D2DFF]" />
-            khémaraOS
+      <div className="menubar absolute top-0 inset-x-0 flex items-center justify-between px-2.5 z-[9000] text-[13px]" style={{ height: MENU_H }}>
+        <div className="flex items-center min-w-0">
+          <button type="button" className={`menubar-item ${menuOpen ? "is-open" : ""}`} onClick={() => setMenuOpen((o) => !o)} aria-label="Menu khémaraOS">
+            <Logo size={15} />
           </button>
-          <span className="text-neutral-400 truncate">{focusedWin ? focusedWin.title : "Bureau"}</span>
+          <span className="menubar-item font-bold">{activeName}</span>
+          {!compact &&
+            MENUS.map((m) => (
+              <span key={m} className="menubar-item menubar-item--static">
+                {m}
+              </span>
+            ))}
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          {onLeave && (
-            <button type="button" onClick={onLeave} className="hover:text-[#1D2DFF]" title="Revenir au bureau 3D (Échap)">
-              {compact ? "[← bureau]" : "[↙ quitter l'écran]"}
-            </button>
+        <div className="flex items-center shrink-0">
+          {!compact && (
+            <>
+              <button type="button" className="menubar-item" onClick={onToggleNight} title={dark ? "Mode clair" : "Mode sombre"} aria-label={dark ? "Mode clair" : "Mode sombre"}>
+                <Glyph name={dark ? "sun" : "moon"} size={15} />
+              </button>
+              <span className="menubar-item menubar-item--static">
+                <Glyph name="battery" size={14} />
+              </span>
+              <span className="menubar-item menubar-item--static">
+                <Glyph name="wifi" size={15} />
+              </span>
+              <span className="menubar-item menubar-item--static">
+                <Glyph name="control" size={15} />
+              </span>
+            </>
           )}
-          <span className="tabular-nums whitespace-nowrap">
-            {now ? now.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) : ""}
-            {"  "}
+          <span className="menubar-item menubar-item--static tabular-nums whitespace-nowrap">
+            {now ? now.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }).replace(/\./g, "") : ""}
+            {" "}
             {now ? now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "--:--"}
           </span>
         </div>
       </div>
 
-      {/* Desktop icons */}
-      <div className={`absolute left-0 top-8 bottom-16 ${compact ? "right-0 grid grid-cols-3 content-start gap-y-4 p-5" : "flex flex-col flex-wrap content-start gap-1 p-4"}`}>
-        {APPS.map((a) => (
+      {menuOpen && (
+        <div className="mac-menu absolute left-2 z-[9500] w-[260px] py-1.5 text-[13px]" style={{ top: MENU_H + 2 }}>
+          <button type="button" className="mac-menu-item" onClick={() => openApp("about")}>
+            À propos de ce portfolio
+          </button>
+          <div className="mac-menu-sep" />
+          <button type="button" className="mac-menu-item" onClick={() => openApp("finder", "applications")}>
+            Applications…
+          </button>
           <button
-            key={a.id}
             type="button"
-            onClick={() => openApp(a.id)}
-            className="os-icon group flex flex-col items-center gap-1.5 w-[104px] py-2 rounded-sm"
+            className="mac-menu-item"
+            onClick={() => {
+              setMenuOpen(false);
+              onToggleNight?.();
+            }}
           >
-            <span className="text-neutral-800 transition-transform group-hover:-translate-y-0.5">
-              <AppIcon app={a.id} />
-            </span>
-            <span className="font-mono text-[11.5px] text-neutral-700 px-1 rounded-sm group-hover:bg-[#1D2DFF] group-hover:text-white">{a.file}</span>
+            {dark ? "Passer en mode clair" : "Passer en mode sombre"}
+          </button>
+          <button
+            type="button"
+            className="mac-menu-item"
+            onClick={() => {
+              setMenuOpen(false);
+              onToggleLamp?.();
+            }}
+          >
+            Allumer / éteindre la lampe
+          </button>
+          <div className="mac-menu-sep" />
+          <a className="mac-menu-item" href={PROFILE.source} target="_blank" rel="noopener noreferrer">
+            Code source sur GitHub…
+          </a>
+          {onLeave && (
+            <>
+              <div className="mac-menu-sep" />
+              <button
+                type="button"
+                className="mac-menu-item flex justify-between"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onLeave();
+                }}
+              >
+                <span>Quitter l&apos;écran</span>
+                <span className="opacity-60">⎋</span>
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Desktop icons, top right like macOS */}
+      <div className={`absolute z-[1] ${compact ? "left-0 right-0 grid grid-cols-4 justify-items-center px-2" : "right-3 flex flex-col gap-2"}`} style={{ top: MENU_H + 12 }}>
+        {desktopItems.map((it) => (
+          <button
+            key={it.key}
+            type="button"
+            className={`desktop-icon flex flex-col items-center gap-1 w-[96px] py-1 ${selectedIcon === it.key ? "is-selected" : ""}`}
+            onClick={() => (compact ? it.open() : setSelectedIcon(it.key))}
+            onDoubleClick={it.open}
+          >
+            <span className="desktop-icon-img grid place-items-center w-[70px] h-[64px] rounded-[6px]">{it.icon}</span>
+            <span className="desktop-icon-label text-[12px] font-medium px-1.5 rounded-[4px] leading-[1.35]">{it.label}</span>
           </button>
         ))}
       </div>
@@ -218,8 +301,13 @@ export default function OS({ posts, compact = false, width, height, powered, onL
         <Window
           key={w.id}
           win={w}
+          title={w.id === "terminal" ? `${PROFILE.handle} — -zsh — 80×24` : w.id === "about" ? "" : APPS[w.id].name}
+          chrome={w.id === "terminal" || w.id === "about" ? "titlebar" : "unified"}
           focused={w.id === focusedId}
           compact={compact}
+          resizable={APPS[w.id].resizable !== false}
+          minW={APPS[w.id].minW}
+          minH={APPS[w.id].minH}
           getScale={getScale}
           bounds={{ w: width, h: height }}
           onFocus={() => focus(w.id)}
@@ -232,43 +320,91 @@ export default function OS({ posts, compact = false, width, height, powered, onL
         </Window>
       ))}
 
-      {/* Dock */}
-      <nav className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-[9000] flex items-end gap-1 px-2 py-1.5 bg-white/75 backdrop-blur-md border border-neutral-200 rounded-[4px] shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
-        {APPS.map((a) => {
-          const open = windows.some((w) => w.id === a.id);
-          return (
-            <button key={a.id} type="button" onClick={() => onDockClick(a.id)} className="os-dock-item relative grid place-items-center w-10 h-10 rounded-sm hover:bg-neutral-100" title={a.label} aria-label={a.label}>
-              <AppIcon app={a.id} size={28} />
-              <span className={`absolute -bottom-1 w-1 h-1 rounded-full ${open ? "bg-[#1D2DFF]" : "bg-transparent"}`} />
-            </button>
-          );
-        })}
-        <span className="w-px h-7 bg-neutral-200 mx-1 self-center" />
-        <a href={PROFILE.github} target="_blank" rel="noopener noreferrer" className="grid place-items-center w-10 h-10 rounded-sm hover:bg-neutral-100 text-neutral-700" title="GitHub" aria-label="GitHub">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-            <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-          </svg>
-        </a>
-      </nav>
+      <Dock compact={compact} running={windows.map((w) => w.id)} getScale={getScale} onOpen={onDockClick} onTrash={() => openApp("finder", "corbeille")} />
 
-      {/* Stand-by and boot screens */}
+      {/* Sleep and boot screens */}
       {phase !== "on" && (
-        <div className={`absolute inset-0 z-[9999] grid place-items-center bg-[#0e0e10] ${phase === "boot" ? "os-boot" : ""}`}>
-          {phase === "boot" ? (
-            <div className="flex flex-col items-center gap-6">
-              <div className="flex items-center gap-3 text-white">
-                <span className="inline-block w-4 h-4 rounded-full bg-[#1D2DFF] os-pulse" />
-                <span className="font-mono text-[22px] tracking-tight">khémaraOS</span>
-              </div>
-              <div className="w-56 h-[3px] bg-white/10 overflow-hidden">
-                <div className="h-full bg-white os-progress" />
+        <div className={`absolute inset-0 z-[9999] grid place-items-center bg-black ${phase === "boot" ? "os-boot" : ""}`}>
+          {phase === "boot" && (
+            <div className="flex flex-col items-center gap-12 text-white [--logo-cut:#000]">
+              <Logo size={80} />
+              <div className="w-[190px] h-[5px] rounded-full bg-white/20 overflow-hidden">
+                <div className="h-full bg-white os-progress rounded-full" />
               </div>
             </div>
-          ) : (
-            <span className="font-mono text-[13px] text-white/25 tracking-[0.3em] uppercase">veille</span>
           )}
         </div>
       )}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------------ */
+/* Dock with magnification                                                   */
+/* ------------------------------------------------------------------------ */
+
+function Dock({ compact, running, getScale, onOpen, onTrash }: { compact: boolean; running: AppId[]; getScale: () => number; onOpen: (app: AppId) => void; onTrash: () => void }) {
+  const base = compact ? 42 : 50;
+  const [mouseX, setMouseX] = useState<number | null>(null);
+  const [hover, setHover] = useState<string | null>(null);
+  const centers = useRef<number[]>([]);
+  const refs = useRef<(HTMLElement | null)[]>([]);
+
+  // Icon centers are measured at rest (unmagnified) when the pointer enters.
+  const measure = () => {
+    centers.current = refs.current.map((el) => {
+      if (!el) return 0;
+      const r = el.getBoundingClientRect();
+      return r.left + r.width / 2;
+    });
+  };
+
+  const sizeFor = (i: number) => {
+    if (compact || mouseX === null || !centers.current[i]) return base;
+    const dist = Math.abs(mouseX - centers.current[i]) / (getScale() || 1);
+    const k = Math.max(0, 1 - dist / 150);
+    return Math.round(base * (1 + 0.55 * Math.sin((k * Math.PI) / 2)));
+  };
+
+  const entries: { key: AppId | "trash"; label: string }[] = [...DOCK.map((id) => ({ key: id, label: APPS[id].name })), { key: "trash", label: "Corbeille" }];
+
+  return (
+    <nav
+      className="dock absolute left-1/2 -translate-x-1/2 bottom-[6px] z-[9000] flex items-end px-[6px] py-[5px]"
+      onPointerEnter={(e) => {
+        if (mouseX === null) measure();
+        setMouseX(e.clientX);
+      }}
+      onPointerMove={(e) => setMouseX(e.clientX)}
+      onPointerLeave={() => {
+        setMouseX(null);
+        setHover(null);
+      }}
+    >
+      {entries.map((it, i) => {
+        const s = sizeFor(i);
+        const isTrash = it.key === "trash";
+        return (
+          <div key={it.key} className="flex items-end">
+            {isTrash && <span className="dock-sep self-stretch mx-[6px] my-1" />}
+            <button
+              ref={(el) => {
+                refs.current[i] = el;
+              }}
+              type="button"
+              onClick={() => (isTrash ? onTrash() : onOpen(it.key as AppId))}
+              onPointerEnter={() => setHover(it.key)}
+              className="dock-item relative flex flex-col items-center mx-[3px]"
+              style={{ width: s, height: s }}
+              aria-label={it.label}
+            >
+              {hover === it.key && !compact && <span className="dock-tooltip absolute bottom-full mb-3 whitespace-nowrap">{it.label}</span>}
+              <AppIcon app={isTrash ? "trash-full" : (it.key as AppId)} size={s} />
+              {!isTrash && <span className={`dock-dot absolute -bottom-[4px] ${running.includes(it.key as AppId) ? "opacity-100" : "opacity-0"}`} />}
+            </button>
+          </div>
+        );
+      })}
+    </nav>
   );
 }

@@ -2,16 +2,18 @@ import type { AppId } from "./types";
 
 export const PROFILE = {
   name: "Khémara Parc",
+  initials: "KP",
   handle: "khemara",
   email: "khemara.parc@etu.univ-nantes.fr",
   github: "https://github.com/pkhemae",
   linkedin: "https://linkedin.com/in/khemaraparc",
-  university: { name: "l'Université de Nantes", url: "https://www.univ-nantes.fr" },
+  university: { name: "Université de Nantes", url: "https://www.univ-nantes.fr" },
   source: "https://github.com/pkhemae/portfolio",
+  domain: "khemara.dev",
 };
 
 export const SKILLS = {
-  langages: [
+  Langages: [
     { name: "HTML", icon: "/icons/html.svg" },
     { name: "CSS", icon: "/icons/css.svg" },
     { name: "JavaScript", icon: "/icons/javascript.svg" },
@@ -19,31 +21,37 @@ export const SKILLS = {
     { name: "Python", icon: "/icons/python.svg" },
     { name: "SQL", icon: "/icons/sql.svg" },
   ],
-  outils: [
+  Outils: [
     { name: "Git", icon: "/icons/git.svg" },
-    { name: "SQLDeveloper", icon: "/icons/sqldeveloper.svg" },
-    { name: "VSCode", icon: "/icons/vscode.svg" },
-    { name: "IntelliJ", icon: "/icons/intellij.svg" },
+    { name: "SQL Developer", icon: "/icons/sqldeveloper.svg" },
+    { name: "VS Code", icon: "/icons/vscode.svg" },
+    { name: "IntelliJ IDEA", icon: "/icons/intellij.svg" },
   ],
 };
 
 export interface AppMeta {
   id: AppId;
-  label: string;
-  /** File-like name shown under the desktop icon. */
-  file: string;
+  name: string;
   w: number;
   h: number;
+  minW?: number;
+  minH?: number;
+  resizable?: boolean;
+  /** Initial position (virtual pixels); otherwise cascaded. */
+  x?: number;
+  y?: number;
 }
 
-export const APPS: AppMeta[] = [
-  { id: "about", label: "À propos", file: "a-propos.txt", w: 560, h: 470 },
-  { id: "projects", label: "Projets", file: "projets/", w: 640, h: 470 },
-  { id: "cv", label: "CV", file: "cv.pdf", w: 460, h: 600 },
-  { id: "skills", label: "Compétences", file: "competences/", w: 520, h: 380 },
-  { id: "github", label: "Activité GitHub", file: "commits.log", w: 760, h: 330 },
-  { id: "contact", label: "Contact", file: "contact.vcf", w: 440, h: 340 },
-  { id: "terminal", label: "Terminal", file: "terminal", w: 620, h: 400 },
-];
+export const APPS: Record<AppId, AppMeta> = {
+  finder: { id: "finder", name: "Finder", w: 780, h: 470, minW: 520, minH: 300 },
+  safari: { id: "safari", name: "Safari", w: 960, h: 620, minW: 560, minH: 360 },
+  notes: { id: "notes", name: "Notes", w: 800, h: 520, minW: 560, minH: 320, x: 150, y: 70 },
+  preview: { id: "preview", name: "Aperçu", w: 540, h: 690, minW: 360, minH: 360 },
+  mail: { id: "mail", name: "Mail", w: 620, h: 470, minW: 440, minH: 340 },
+  terminal: { id: "terminal", name: "Terminal", w: 660, h: 410, minW: 400, minH: 220 },
+  activity: { id: "activity", name: "Moniteur d'activité", w: 840, h: 400, minW: 560, minH: 300 },
+  about: { id: "about", name: "À propos", w: 300, h: 430, resizable: false },
+};
 
-export const appMeta = (id: AppId) => APPS.find((a) => a.id === id);
+/** Apps in the Dock, in order. */
+export const DOCK: AppId[] = ["finder", "safari", "notes", "preview", "mail", "activity", "terminal"];

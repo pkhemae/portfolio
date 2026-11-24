@@ -2,20 +2,8 @@ import * as THREE from "three";
 import { CSS3DObject, CSS3DRenderer } from "three/examples/jsm/renderers/CSS3DRenderer.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import {
-  SCREEN,
-  createBooks,
-  createDesk,
-  createGround,
-  createHeadphones,
-  createKeyboard,
-  createLamp,
-  createMonitor,
-  createMouse,
-  createMug,
-  createNotebook,
-  createPlant,
-} from "./objects";
+import { SCREEN, createBooks, createDesk, createGround, createMug, createNotebook, createPlant } from "./objects";
+import { createDeskMat, createDisplay, createKeyboard, createLamp, createMouse, createStickyNote } from "./hardware";
 import { Tween, createTween, cubicBezier, easeInOutCubic, easeOutExpo } from "./tween";
 
 export type SceneMode = "intro" | "desk" | "screen";
@@ -29,6 +17,7 @@ export interface DeskSceneOptions {
   onHover?: (target: Interactive | null) => void;
   onInteract?: (target: Interactive) => void;
   onNightChange?: (night: boolean) => void;
+  onLampChange?: (on: boolean) => void;
   /** Called when the free camera moves away from / back to the default view. */
   onViewChange?: (moved: boolean) => void;
   reducedMotion?: boolean;
@@ -59,9 +48,6 @@ const DAY = {
   sun: 2.3,
   env: 0.55,
   floorShadow: 0.16,
-  lamp: 0,
-  lampGlow: 0,
-  bulb: 0.2,
   screenLight: 0,
 };
 
@@ -71,11 +57,11 @@ const NIGHT = {
   sun: 0.03,
   env: 0.035,
   floorShadow: 0.5,
-  lamp: 5,
-  lampGlow: 0.25,
-  bulb: 3.5,
-  screenLight: 0.7,
+  screenLight: 0.45,
 };
+
+/** Desk lamp output when switched on (independent from the room light). */
+const LAMP = { spot: 4.5, glow: 0.22, bulb: 3.2 };
 
 interface CameraKey {
   position: THREE.Vector3;
@@ -96,7 +82,7 @@ export class DeskScene {
   private sun: THREE.DirectionalLight;
   private screenLight: THREE.PointLight;
   private ground: ReturnType<typeof createGround>;
-  private monitor: ReturnType<typeof createMonitor>;
+  private monitor: ReturnType<typeof createDisplay>;
   private lamp: ReturnType<typeof createLamp>;
   private plant: ReturnType<typeof createPlant>;
   private mug: ReturnType<typeof createMug>;
@@ -112,6 +98,9 @@ export class DeskScene {
   private night = false;
   private nightK = 0;
   private nightTween: Tween | null = null;
+  private lampOn = false;
+  private lampK = 0;
+  private lampTween: Tween | null = null;
   private camTween: Tween | null = null;
   private plantWiggle = 0;
   private steamOn = true;
@@ -202,10 +191,12 @@ export class DeskScene {
     this.ground = createGround();
     this.scene.add(this.ground.group);
     this.scene.add(createDesk());
-    this.monitor = createMonitor();
+    this.monitor = createDisplay();
     this.scene.add(this.monitor.group);
+    this.scene.add(createDeskMat());
+    this.scene.add(createStickyNote());
     this.scene.add(createKeyboard());
-    this.scene.add(createMouse().group);
+    this.scene.add(createMouse());
     this.mug = createMug();
     this.scene.add(this.mug.group);
     this.lamp = createLamp();
@@ -214,7 +205,6 @@ export class DeskScene {
     this.scene.add(this.plant.group);
     this.scene.add(createBooks());
     this.scene.add(createNotebook());
-    this.scene.add(createHeadphones());
 
     this.screenLight = new THREE.PointLight("#bcd0ff", 0, 1.6, 2);
     this.screenLight.position.copy(this.monitor.screenCenter).addScaledVector(this.monitor.screenNormal, 0.25);
@@ -293,10 +283,32 @@ export class DeskScene {
     return this.night;
   }
 
+  isLampOn() {
+    return this.lampOn;
+  }
+
+  /** Switches the desk lamp only (not the room). */
+  setLamp(on: boolean) {
+    if (on === this.lampOn) return;
+    this.lampOn = on;
+    this.opts.onLampChange?.(on);
+    const from = this.lampK;
+    const to = on ? 1 : 0;
+    this.lampTween?.cancel();
+    // Quick, slightly flickery switch like a real bulb.
+    this.lampTween = createTween(this.opts.reducedMotion ? 1 : 260, (t) => t, (k) => {
+      const flicker = on && k < 0.6 ? (Math.sin(k * 40) > 0 ? 1 : 0.55) : 1;
+      this.lampK = (from + (to - from) * k) * flicker;
+      this.applyLamp();
+    });
+  }
+
+  /** Day / night ambience of the room. The lamp follows: on at night, off by day. */
   setNight(night: boolean) {
     if (night === this.night) return;
     this.night = night;
     this.opts.onNightChange?.(night);
+    this.setLamp(night);
     const from = this.nightK;
     const to = night ? 1 : 0;
     this.nightTween?.cancel();
@@ -510,9 +522,6 @@ export class DeskScene {
     this.scene.environmentIntensity = lerp(DAY.env, NIGHT.env);
     this.ground.floorMaterial.opacity = lerp(DAY.floorShadow, NIGHT.floorShadow);
     this.ground.blobMaterial.opacity = lerp(0.22, 0.5);
-    this.lamp.spot.intensity = lerp(DAY.lamp, NIGHT.lamp);
-    this.lamp.glow.intensity = lerp(DAY.lampGlow, NIGHT.lampGlow);
-    this.lamp.bulbMat.emissiveIntensity = lerp(DAY.bulb, NIGHT.bulb);
     this.screenLight.intensity = lerp(DAY.screenLight, NIGHT.screenLight);
     this.opts.container.style.setProperty("--scene-bg", `#${(this.scene.background as THREE.Color).getHexString()}`);
   }
@@ -522,6 +531,13 @@ export class DeskScene {
     el.scrollTop = 0;
     el.scrollLeft = 0;
   };
+
+  private applyLamp() {
+    const k = this.lampK;
+    this.lamp.spot.intensity = LAMP.spot * k;
+    this.lamp.glow.intensity = LAMP.glow * k;
+    this.lamp.bulbMat.emissiveIntensity = LAMP.bulb * k;
+  }
 
   private onResize = () => {
     const { container } = this.opts;
@@ -599,7 +615,7 @@ export class DeskScene {
         this.focusScreen();
         break;
       case "lamp":
-        this.setNight(!this.night);
+        this.setLamp(!this.lampOn);
         break;
       case "plant":
         this.plantWiggle = 1;
@@ -642,6 +658,7 @@ export class DeskScene {
 
     this.camTween?.update(now);
     this.nightTween?.update(now);
+    this.lampTween?.update(now);
     this.updateControls();
 
     // Smooth parallax.
@@ -663,8 +680,6 @@ export class DeskScene {
     this.mug.steam.visible = this.steamK > 0.01;
     this.mug.steam.quaternion.copy(this.camera.quaternion);
 
-    // Power LED breathing.
-    this.monitor.led.emissiveIntensity = 1 + Math.sin(t * 2) * 0.4;
 
     this.applyCamera();
     this.updateHover();

@@ -15,7 +15,7 @@ interface ExperienceProps {
 
 const HINTS: Record<Interactive, string> = {
   screen: "Cliquer pour allumer et explorer l'ordinateur",
-  lamp: "Allumer / éteindre la lampe",
+  lamp: "Allumer / éteindre la lampe de bureau",
   plant: "Chatouiller la plante",
   mug: "Souffler sur le café",
 };
@@ -42,6 +42,7 @@ export default function Experience({ posts }: ExperienceProps) {
   const [mode, setMode] = useState<SceneMode>("intro");
   const [hover, setHover] = useState<Interactive | null>(null);
   const [night, setNight] = useState(false);
+  const [lampOn, setLampOn] = useState(false);
   const [muted, setMuted] = useState(false);
   const [mobileOS, setMobileOS] = useState(false);
   const [viewMoved, setViewMoved] = useState(false);
@@ -85,6 +86,7 @@ export default function Experience({ posts }: ExperienceProps) {
         onModeChange: setMode,
         onHover: setHover,
         onNightChange: setNight,
+        onLampChange: setLampOn,
         onViewChange: setViewMoved,
         onInteract: () => sound.click(),
       });
@@ -118,6 +120,11 @@ export default function Experience({ posts }: ExperienceProps) {
     if (s) s.setNight(!s.isNight());
   }, []);
 
+  const toggleLamp = useCallback(() => {
+    const s = sceneRef.current;
+    if (s) s.setLamp(!s.isLampOn());
+  }, []);
+
   // No WebGL: the OS alone, full screen.
   if (webgl === false) {
     return (
@@ -148,8 +155,10 @@ export default function Experience({ posts }: ExperienceProps) {
             width={SCREEN.pxWidth}
             height={SCREEN.pxHeight}
             powered={powered}
+            dark={night}
             onLeave={compact ? undefined : leave}
             onToggleNight={toggleNight}
+            onToggleLamp={toggleLamp}
           />,
           screenEl,
         )}
@@ -158,7 +167,7 @@ export default function Experience({ posts }: ExperienceProps) {
       {/* Stays mounted so the OS keeps its windows between visits. */}
       {compact && (
         <div inert={!mobileOS} className={`fixed inset-0 z-30 transition-opacity duration-500 ${mobileOS ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
-          <OS posts={posts} width={vp.w} height={vp.h} compact powered onLeave={leave} onToggleNight={toggleNight} />
+          <OS posts={posts} width={vp.w} height={vp.h} compact powered dark={night} onLeave={leave} onToggleNight={toggleNight} onToggleLamp={toggleLamp} />
         </div>
       )}
 
@@ -170,12 +179,15 @@ export default function Experience({ posts }: ExperienceProps) {
           <p className="hud-title text-[15px] font-semibold tracking-tight">Khémara Parc</p>
           <p className="hud-sub font-mono text-[11px] uppercase tracking-[0.18em]">étudiant · BUT informatique</p>
         </div>
-        <div className={`absolute top-5 right-5 sm:top-6 sm:right-7 flex items-center gap-1 ${started && mode !== "screen" ? "pointer-events-auto" : ""}`}>
+        <div className={`absolute top-5 right-5 sm:top-6 sm:right-7 max-sm:top-auto max-sm:right-auto max-sm:bottom-16 max-sm:left-1/2 max-sm:-translate-x-1/2 whitespace-nowrap flex items-center gap-1 ${started && mode !== "screen" ? "pointer-events-auto" : ""}`}>
           {viewMoved && mode === "desk" && (
             <button type="button" className="hud-btn" onClick={() => sceneRef.current?.resetView()}>
               [recentrer]
             </button>
           )}
+          <button type="button" className="hud-btn" onClick={toggleLamp} aria-pressed={lampOn}>
+            [lampe : {lampOn ? "on" : "off"}]
+          </button>
           <button type="button" className="hud-btn" onClick={toggleNight} aria-pressed={night}>
             [{night ? "jour" : "nuit"}]
           </button>
