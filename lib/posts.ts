@@ -40,14 +40,18 @@ export function getSortedPostsData(): Omit<Post, "content" | "toc">[] {
         };
     });
 
-    // Sort posts by date
-    return allPostsData.sort((a, b) => {
-        if (a.date < b.date) {
-            return 1;
-        } else {
-            return -1;
-        }
-    });
+    // Sort posts by date (dates are written as dd/mm/yyyy), newest first.
+    const toKey = (d: string) => {
+        const m = d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        return m ? `${m[3]}-${m[2]}-${m[1]}` : d;
+    };
+    return allPostsData.sort((a, b) => (toKey(a.date) < toKey(b.date) ? 1 : -1));
+}
+
+/** All posts, newest first, with their rendered HTML (used by the desktop OS). */
+export async function getAllPostsWithContent(): Promise<Post[]> {
+    const summaries = getSortedPostsData();
+    return Promise.all(summaries.map((p) => getPostData(p.slug)));
 }
 
 export function getAllPostSlugs() {
@@ -95,6 +99,6 @@ export async function getPostData(slug: string): Promise<Post> {
         slug,
         content: contentHtml,
         toc,
-        ...(matterResult.data as { title: string; date: string; description: string }),
+        ...(matterResult.data as { title: string; date: string; description: string; thumbnail?: string }),
     };
 }
