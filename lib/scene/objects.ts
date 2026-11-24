@@ -280,6 +280,8 @@ export function createPlant() {
   const greens = ["#3f7d4e", "#4f9460", "#356b43", "#5ea56f"];
   const rand = rng(42);
   const leafGeom = new THREE.SphereGeometry(1, 16, 12);
+  // One material per shade, shared by the leaves.
+  const leafMats = greens.map((g) => std(g, 0.55, 0, { side: THREE.DoubleSide }));
   const count = 11;
   for (let i = 0; i < count; i++) {
     const pivot = new THREE.Group();
@@ -288,7 +290,7 @@ export function createPlant() {
     const len = 0.11 + rand() * 0.08;
     pivot.rotation.y = angle;
     pivot.rotation.z = tilt;
-    const leaf = new THREE.Mesh(leafGeom, std(greens[i % greens.length], 0.55, 0, { side: THREE.DoubleSide }));
+    const leaf = new THREE.Mesh(leafGeom, leafMats[i % leafMats.length]);
     leaf.scale.set(0.022 + rand() * 0.008, len, 0.006);
     leaf.position.y = len;
     pivot.add(leaf);

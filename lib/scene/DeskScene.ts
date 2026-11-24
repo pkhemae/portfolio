@@ -105,6 +105,14 @@ export class DeskScene {
   private camTween: Tween | null = null;
   private plantWiggle = 0;
   private frame = 0;
+  /** When false the loop idles (hidden behind the loader or the phone OS). */
+  private active = true;
+  /** Frames still to draw while nothing moves in screen mode. */
+  private settleFrames = 3;
+  private pointerMoved = true;
+  private readonly tmpV2 = new THREE.Vector2();
+  private readonly tmpRight = new THREE.Vector3();
+  private readonly tmpUp = new THREE.Vector3();
   private steamOn = true;
   private steamK = 1;
 
@@ -274,6 +282,17 @@ export class DeskScene {
     // Go back to wherever the visitor was looking from.
     const key = this.lastDeskView ?? this.deskKey();
     this.moveCamera(key, this.opts.reducedMotion ? 300 : 1500, easeInOutCubic, () => this.enableControls(key));
+  }
+
+  /**
+   * Pauses or resumes rendering. Used while the scene is fully covered (boot
+   * loader, full-screen OS on phones) so the GPU and the main thread stay free.
+   */
+  setActive(active: boolean) {
+    if (active === this.active) return;
+    this.active = active;
+    this.settleFrames = 3;
+    this.clock.getDelta(); // no big time jump on resume
   }
 
   /** Flies back to the default view of the desk. */
@@ -485,8 +504,8 @@ export class DeskScene {
       // Subtle parallax along the camera's own axes, scaled by distance.
       const k = Math.min(0.1, this.camPos.distanceTo(this.camTarget) * 0.04);
       this.camera.updateMatrix();
-      const right = new THREE.Vector3().setFromMatrixColumn(this.camera.matrix, 0);
-      const up = new THREE.Vector3().setFromMatrixColumn(this.camera.matrix, 1);
+      const right = this.tmpRight.setFromMatrixColumn(this.camera.matrix, 0);
+      const up = this.tmpUp.setFromMatrixColumn(this.camera.matrix, 1);
       this.camera.position.addScaledVector(right, p.x * k).addScaledVector(up, p.y * k * 0.5);
       this.camera.lookAt(this.camTarget);
     }
@@ -507,6 +526,7 @@ export class DeskScene {
   /* ---------------------------------------------------------------------- */
 
   private setMode(mode: SceneMode) {
+    this.settleFrames = 3;
     if (this.mode === mode) return;
     this.mode = mode;
     this.opts.onModeChange?.(mode);
@@ -550,6 +570,7 @@ export class DeskScene {
   }
 
   private onResize = () => {
+    this.settleFrames = 3;
     const { container } = this.opts;
     const w = container.clientWidth;
     const h = container.clientHeight;
@@ -578,6 +599,7 @@ export class DeskScene {
 
   private onPointerMove = (e: PointerEvent) => {
     this.updatePointer(e);
+    this.pointerMoved = true;
   };
 
   private onPointerDown = (e: PointerEvent) => {
@@ -662,6 +684,21 @@ export class DeskScene {
   private loop = () => {
     if (this.disposed) return;
     this.raf = requestAnimationFrame(this.loop);
+    if (!this.active) return;
+
+    // Zoomed on the screen with the camera at rest, nothing in the 3D view
+    // changes: skip rendering entirely (the OS is plain DOM and stays live).
+    const cameraMoving = !!this.camTween;
+    if (this.mode === "screen" && !cameraMoving) {
+      if (this.settleFrames <= 0) {
+        this.clock.getDelta();
+        return;
+      }
+      this.settleFrames--;
+    } else {
+      this.settleFrames = 3;
+    }
+
     const now = performance.now();
     const dt = Math.min(this.clock.getDelta(), 0.1);
     const t = this.clock.elapsedTime;
@@ -672,7 +709,7 @@ export class DeskScene {
     this.updateControls();
 
     // Smooth parallax.
-    const target = this.mode === "desk" && !this.dragging ? this.pointer : new THREE.Vector2();
+    const target = this.mode === "desk" && !this.dragging ? this.pointer : this.tmpV2.set(0, 0);
     this.pointerSmoothed.lerp(target, 1 - Math.exp(-dt * 3));
 
     // Plant wiggle (damped) and idle sway.
@@ -692,7 +729,12 @@ export class DeskScene {
 
 
     this.applyCamera();
-    this.updateHover();
+    // Hover only needs a raycast when the pointer moved (or now and then, as
+    // the camera drifts slightly with the parallax).
+    if (this.pointerMoved || this.frame % 6 === 0) {
+      this.updateHover();
+      this.pointerMoved = false;
+    }
     this.updateScreenDimmer();
 
     // Shadows: every frame only while something casting them moves (plant

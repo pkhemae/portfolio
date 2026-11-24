@@ -296,6 +296,8 @@ export function createKeyboard() {
   const u = W / 15.6;
   const gap = u * 0.13;
   const keyTop = 0.0075 / 2 + 0.0006 + 0.0008;
+  const keyDummy = new THREE.Object3D();
+  const keyMatrices: THREE.Matrix4[] = [];
 
   // Legends are painted on one transparent canvas laid over the key tops.
   const S = 9000; // canvas pixels per meter
@@ -377,13 +379,11 @@ export function createKeyboard() {
       const isSideArrow = r === KEY_ROWS.length - 1 && (i === 7 || i === 9);
       const parts = isUpDown ? [-0.25, 0.25] : isSideArrow ? [0.25] : [0];
       for (const off of parts) {
-        const key = new THREE.Mesh(keyGeom, keyMat);
         const h = isUpDown || isSideArrow ? rowH / 2 : rowH;
-        key.scale.set(w - gap, 0.0016, h - gap);
-        key.position.set(x + w / 2, 0.0075 / 2 + 0.0006, z + rowH / 2 + off * rowH);
-        key.castShadow = false;
-        key.receiveShadow = true;
-        deck.add(key);
+        keyDummy.scale.set(w - gap, 0.0016, h - gap);
+        keyDummy.position.set(x + w / 2, 0.0075 / 2 + 0.0006, z + rowH / 2 + off * rowH);
+        keyDummy.updateMatrix();
+        keyMatrices.push(keyDummy.matrix.clone());
       }
       if (isSideArrow) {
         drawLegend(k.legend, x, z + rowH / 2, w, rowH / 2);
@@ -394,6 +394,14 @@ export function createKeyboard() {
     });
     z += rowH;
   });
+
+  // All keys share one geometry and material: draw them in a single call.
+  const keys = new THREE.InstancedMesh(keyGeom, keyMat, keyMatrices.length);
+  keyMatrices.forEach((m, i) => keys.setMatrixAt(i, m));
+  keys.instanceMatrix.needsUpdate = true;
+  keys.computeBoundingSphere();
+  keys.receiveShadow = true;
+  deck.add(keys);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -409,6 +417,7 @@ export function createKeyboard() {
 
   shadowed(group);
   legends.castShadow = false;
+  keys.castShadow = false;
   return group;
 }
 

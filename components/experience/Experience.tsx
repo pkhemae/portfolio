@@ -34,6 +34,7 @@ export default function Experience({ posts }: ExperienceProps) {
   const [powered, setPowered] = useState(false);
   const [mode, setMode] = useState<SceneMode>("intro");
   const [mobileOS, setMobileOS] = useState(false);
+  const startedRef = useRef(false);
   const vp = useViewport();
   const compact = vp.w < 820 || vp.h < 520;
 
@@ -46,6 +47,11 @@ export default function Experience({ posts }: ExperienceProps) {
     const id = setTimeout(() => setMobileOS(true), 650);
     return () => clearTimeout(id);
   }, [compact, mode]);
+
+  // The full-screen phone OS hides the 3D completely: no need to render it.
+  useEffect(() => {
+    sceneRef.current?.setActive(!mobileOS && startedRef.current);
+  }, [mobileOS]);
 
   // Create the 3D scene.
   useEffect(() => {
@@ -84,7 +90,17 @@ export default function Experience({ posts }: ExperienceProps) {
       sceneRef.current = scene;
       setProgress(0.8);
       // Let a couple of frames render (shader compilation) before revealing.
-      requestAnimationFrame(() => requestAnimationFrame(() => !disposed && setProgress(1)));
+      // Let a few frames render (shaders compiled, textures uploaded, shadows
+      // drawn) so pressing Enter does not hitch, then pause the 3D while the
+      // opaque loader covers it.
+      let frames = 0;
+      const warm = () => {
+        if (disposed) return;
+        if (++frames < 4) return void requestAnimationFrame(warm);
+        if (!startedRef.current) scene?.setActive(false);
+        setProgress(1);
+      };
+      requestAnimationFrame(warm);
     })();
 
     return () => {
@@ -95,6 +111,8 @@ export default function Experience({ posts }: ExperienceProps) {
   }, []);
 
   const start = useCallback(() => {
+    startedRef.current = true;
+    sceneRef.current?.setActive(true);
     setStarted(true);
     setTimeout(() => setLoaderGone(true), 700);
     sceneRef.current?.start();
