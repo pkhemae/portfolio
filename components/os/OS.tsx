@@ -56,7 +56,10 @@ export default function OS({ posts, compact = false, width, height, powered, dar
       setMenuOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenuOpen(false);
+      if (e.key === "Escape") {
+        e.preventDefault(); // only close the menu, don't leave the screen
+        setMenuOpen(false);
+      }
     };
     document.addEventListener("pointerdown", onDown, true);
     document.addEventListener("keydown", onKey);

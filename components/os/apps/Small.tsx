@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Glyph } from "../Icons";
 import { PROFILE } from "../profile";
 import type { OSApi } from "../types";
@@ -29,6 +29,15 @@ export function Preview() {
     }
     setZoom(Math.min(3, Math.max(0.5, +z.toFixed(2))));
   };
+
+  // Window resized: the document may start (or stop) overflowing.
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setCanPan(el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useLayoutEffect(() => {
     const el = scroller.current;

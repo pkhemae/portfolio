@@ -625,7 +625,10 @@ export class DeskScene {
   };
 
   private onKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Escape" && this.mode === "screen") {
+    // The OS may use Escape itself (closing a menu); text fields keep it too.
+    const t = e.target as HTMLElement | null;
+    const typing = !!t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+    if (e.key === "Escape" && this.mode === "screen" && !e.defaultPrevented && !typing) {
       this.leaveScreen();
     }
   };
@@ -693,8 +696,8 @@ export class DeskScene {
 
     // Zoomed on the screen with the camera at rest, nothing in the 3D view
     // changes: skip rendering entirely (the OS is plain DOM and stays live).
-    const cameraMoving = !!this.camTween;
-    if (this.mode === "screen" && !cameraMoving) {
+    const animating = !!this.camTween || !!(this.lampTween && !this.lampTween.done) || this.plantWiggle > 0;
+    if (this.mode === "screen" && !animating) {
       if (this.settleFrames <= 0) {
         this.clock.getDelta();
         return;
