@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import {
   paperTexture,
+  softenCanvas,
   radialShadowTexture,
   rng,
   woodTexture,
@@ -54,39 +55,52 @@ function deskFloorShadowTexture(lightOffset: { x: number; z: number }) {
   const size = 1024;
   const span = 4; // meters covered by the texture
   const k = size / span;
+  const px = (x: number) => (x + span / 2) * k;
+  const pz = (z: number) => (z + span / 2) * k;
+
+  // Each layer is drawn sharp, then blurred by resampling (fast and portable).
+  const layer = (blur: number, draw: (ctx: CanvasRenderingContext2D) => void) => {
+    const c = document.createElement("canvas");
+    c.width = size;
+    c.height = size;
+    draw(c.getContext("2d")!);
+    softenCanvas(c, blur);
+    return c;
+  };
+
+  // Wide ambient occlusion under the whole desk.
+  const ao = layer(48, (ctx) => {
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillRect(px(-0.95), pz(-0.5), 1.9 * k, 1.0 * k);
+  });
+  // Desk top projected by the key light, with a wide penumbra.
+  const top = layer(20, (ctx) => {
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(px(-0.85 + lightOffset.x), pz(-0.4 + lightOffset.z), 1.7 * k, 0.8 * k);
+  });
+  // Contact shadows where the legs touch the floor.
+  const legs = layer(4, (ctx) => {
+    ctx.fillStyle = "rgba(0,0,0,0.9)";
+    for (const [x, z] of [
+      [-0.78, -0.33],
+      [0.78, -0.33],
+      [-0.78, 0.33],
+      [0.78, 0.33],
+    ]) {
+      ctx.beginPath();
+      ctx.arc(px(x), pz(z), 0.03 * k, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext("2d")!;
-  const px = (x: number) => (x + span / 2) * k;
-  const pz = (z: number) => (z + span / 2) * k;
-
-  // Wide ambient occlusion under the whole desk.
-  ctx.filter = "blur(70px)";
-  ctx.fillStyle = "rgba(0,0,0,0.45)";
-  ctx.fillRect(px(-0.95), pz(-0.5), 1.9 * k, 1.0 * k);
-
-  // Desk top projected by the key light, with a wide penumbra.
-  ctx.filter = "blur(30px)";
-  ctx.fillStyle = "rgba(0,0,0,0.7)";
-  ctx.fillRect(px(-0.85 + lightOffset.x), pz(-0.4 + lightOffset.z), 1.7 * k, 0.8 * k);
-
-  // Contact shadows where the legs touch the floor.
-  ctx.filter = "blur(6px)";
-  ctx.fillStyle = "rgba(0,0,0,0.9)";
-  for (const [x, z] of [
-    [-0.78, -0.33],
-    [0.78, -0.33],
-    [-0.78, 0.33],
-    [0.78, 0.33],
-  ]) {
-    ctx.beginPath();
-    ctx.arc(px(x), pz(z), 0.03 * k, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.filter = "none";
-  const tex = new THREE.CanvasTexture(canvas);
-  return tex;
+  ctx.drawImage(ao, 0, 0);
+  ctx.drawImage(top, 0, 0);
+  ctx.drawImage(legs, 0, 0);
+  return new THREE.CanvasTexture(canvas);
 }
 
 export function createGround(lightDir = new THREE.Vector3(-1.2, 5.4, 1.9)) {

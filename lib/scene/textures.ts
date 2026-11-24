@@ -25,9 +25,29 @@ export function rng(seed: number) {
   };
 }
 
+/**
+ * Cheap, portable blur: scale the canvas down then back up with smoothing.
+ * (ctx.filter = "blur()" is extremely slow on CPU-rendered canvases and
+ * missing in older Safari.)
+ */
+export function softenCanvas(canvas: HTMLCanvasElement, factor: number) {
+  const small = document.createElement("canvas");
+  small.width = Math.max(1, Math.round(canvas.width / factor));
+  small.height = Math.max(1, Math.round(canvas.height / factor));
+  const sctx = small.getContext("2d")!;
+  sctx.imageSmoothingEnabled = true;
+  sctx.imageSmoothingQuality = "high";
+  sctx.drawImage(canvas, 0, 0, small.width, small.height);
+  const ctx = canvas.getContext("2d")!;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(small, 0, 0, canvas.width, canvas.height);
+}
+
 export function woodTexture(): THREE.CanvasTexture {
-  // Dark oak with a quiet, irregular figure: soft colour variations first,
-  // then a few faint, blurred grain lines of varying length.
+  // Dark oak with a quiet, irregular figure: soft colour variations, then a
+  // few faint grain lines of varying length, softened by resampling.
   const w = 2048;
   const h = 1024;
   const { canvas, ctx } = makeCanvas(w, h);
@@ -36,22 +56,27 @@ export function woodTexture(): THREE.CanvasTexture {
   ctx.fillStyle = "#74502f";
   ctx.fillRect(0, 0, w, h);
 
-  // Large, soft tone variations (long along the grain).
-  ctx.filter = "blur(24px)";
+  // Large, soft tone variations: radial gradients stretched along the grain.
   for (let i = 0; i < 70; i++) {
     const x = rand() * w;
     const y = rand() * h;
     const rx = 200 + rand() * 700;
     const ry = 20 + rand() * 70;
     const dark = rand() > 0.45;
-    ctx.fillStyle = dark ? `rgba(58,36,20,${0.08 + rand() * 0.14})` : `rgba(150,108,66,${0.06 + rand() * 0.12})`;
-    ctx.beginPath();
-    ctx.ellipse(x, y, rx, ry, (rand() - 0.5) * 0.04, 0, Math.PI * 2);
-    ctx.fill();
+    const a = dark ? 0.08 + rand() * 0.14 : 0.06 + rand() * 0.12;
+    const rgb = dark ? "58,36,20" : "150,108,66";
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(rx, ry);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+    g.addColorStop(0, `rgba(${rgb},${a})`);
+    g.addColorStop(1, `rgba(${rgb},0)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(-1, -1, 2, 2);
+    ctx.restore();
   }
 
-  // Faint grain: segments of varying length and opacity, softened by a blur.
-  ctx.filter = "blur(1.2px)";
+  // Faint grain: segments of varying length and opacity.
   for (let i = 0; i < 340; i++) {
     const y0 = rand() * h;
     const x0 = rand() * w * 0.6 - w * 0.1;
@@ -71,7 +96,6 @@ export function woodTexture(): THREE.CanvasTexture {
   }
 
   // Oak flecks: short, lighter, very subtle.
-  ctx.filter = "blur(0.8px)";
   for (let i = 0; i < 180; i++) {
     const x = rand() * w;
     const y = rand() * h;
@@ -83,7 +107,8 @@ export function woodTexture(): THREE.CanvasTexture {
     ctx.lineTo(x + len, y + (rand() - 0.5) * 2);
     ctx.stroke();
   }
-  ctx.filter = "none";
+
+  softenCanvas(canvas, 2);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;

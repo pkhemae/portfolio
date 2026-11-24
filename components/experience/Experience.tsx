@@ -64,14 +64,23 @@ export default function Experience({ posts }: ExperienceProps) {
         setProgress(1);
         return;
       }
+      try {
+        scene = new mod.DeskScene({
+          container: containerRef.current,
+          screenElement: el,
+          reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+          onModeChange: setMode,
+        });
+      } catch (err) {
+        // Never leave the visitor on a blank screen: fall back to the 2D OS.
+        console.error("3D scene failed to start, falling back to 2D.", err);
+        containerRef.current?.replaceChildren();
+        setWebgl(false);
+        setProgress(1);
+        return;
+      }
       setWebgl(true);
       setScreenEl(el);
-      scene = new mod.DeskScene({
-        container: containerRef.current,
-        screenElement: el,
-        reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-        onModeChange: setMode,
-      });
       sceneRef.current = scene;
       setProgress(0.8);
       // Let a couple of frames render (shader compilation) before revealing.
@@ -128,8 +137,6 @@ export default function Experience({ posts }: ExperienceProps) {
           <OS posts={posts} width={vp.w} height={vp.h} compact powered onLeave={leave} onToggleLamp={toggleLamp} />
         </div>
       )}
-
-      <div className="grain pointer-events-none fixed inset-0 z-20" aria-hidden />
 
       {!loaderGone && <Loader progress={progress} onStart={start} leaving={started} />}
     </main>

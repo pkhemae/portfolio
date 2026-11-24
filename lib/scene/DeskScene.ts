@@ -104,6 +104,7 @@ export class DeskScene {
   private lampTween: Tween | null = null;
   private camTween: Tween | null = null;
   private plantWiggle = 0;
+  private frame = 0;
   private steamOn = true;
   private steamK = 1;
 
@@ -137,12 +138,16 @@ export class DeskScene {
     this.cssRenderer.domElement.addEventListener("scroll", this.resetCssScroll);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Cap the resolution on very dense screens: a big saving for little visible change.
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
     this.renderer.setSize(width, height);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.0;
     this.renderer.shadowMap.enabled = true;
+    // The scene is almost static: shadow maps are refreshed on demand (see loop).
+    this.renderer.shadowMap.autoUpdate = false;
+    this.renderer.shadowMap.needsUpdate = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     Object.assign(this.renderer.domElement.style, {
       position: "absolute",
@@ -689,6 +694,14 @@ export class DeskScene {
     this.applyCamera();
     this.updateHover();
     this.updateScreenDimmer();
+
+    // Shadows: every frame only while something casting them moves (plant
+    // shaken, lamp switching), otherwise a few times per second for the
+    // plant's gentle idle sway.
+    this.frame++;
+    if (this.plantWiggle > 0 || (this.lampTween && !this.lampTween.done) || this.frame % 10 === 0) {
+      this.renderer.shadowMap.needsUpdate = true;
+    }
 
     this.renderer.render(this.scene, this.camera);
     this.cssRenderer.render(this.cssScene, this.cssCamera);
