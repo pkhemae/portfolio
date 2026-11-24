@@ -236,8 +236,16 @@ function SystemInfo({ size }: { size: number }) {
  */
 function Trash({ size, full }: { size: number; full?: boolean }) {
   const [metal, inner, rim, shade, gloss, blur] = useIds(6);
-  // Bin outline: top ellipse at y=22 (rx 33), bottom at y=90 (rx 25).
-  const body = "M17 22 L25 88 Q26 93 50 93 Q74 93 75 88 L83 22 Z";
+  // The opening is an ellipse (rim) centred at y=22. The front wall starts
+  // on the FRONT half of that ellipse, so the inside and the papers show
+  // through the whole opening.
+  const RX = 33.5;
+  const RY = 6.8;
+  const L = 50 - RX;
+  const R = 50 + RX;
+  const body = `M${L} 22 A${RX} ${RY} 0 0 0 ${R} 22 L75 88 Q74 93 50 93 Q26 93 25 88 Z`;
+  const backRim = `M${L} 22 A${RX} ${RY} 0 0 1 ${R} 22`;
+  const frontRim = `M${L} 22 A${RX} ${RY} 0 0 0 ${R} 22`;
   return (
     <Frame size={size} shadow={false}>
       <defs>
@@ -278,11 +286,12 @@ function Trash({ size, full }: { size: number; full?: boolean }) {
       {/* Ground shadow */}
       <ellipse cx="50" cy="93" rx="27" ry="3.2" fill="rgba(0,0,0,0.35)" filter={`url(#${blur})`} />
 
-      {/* Inside of the bin (seen through the opening) */}
-      <ellipse cx="50" cy="22" rx="33" ry="6.5" fill={`url(#${inner})`} />
+      {/* Inside of the bin, seen through the opening, and the back of the rim */}
+      <ellipse cx="50" cy="22" rx={RX} ry={RY} fill={`url(#${inner})`} />
+      <path d={backRim} fill="none" stroke={`url(#${rim})`} strokeWidth="3" />
 
       {full && (
-        <g transform="translate(50 23) scale(1.18) translate(-50 -23)">
+        <g transform="translate(50 25) scale(1.18) translate(-50 -23)">
           {/* Newspaper page */}
           <path d="M22 23 L27 9 L41 6 L46 14 L44 24 Z" fill="#f2f0ea" stroke="#b9b6ad" strokeWidth="0.6" />
           <path d="M28 11 L39 9 M28.5 13.5 L40 11.5 M29 16 L40.5 14 M29.5 18.5 L41 16.5" stroke="#8d8a83" strokeWidth="0.8" />
@@ -309,9 +318,9 @@ function Trash({ size, full }: { size: number; full?: boolean }) {
       {/* Frosted vertical sheen */}
       <path d="M33 25 L37 89 L45 90 L42 25 Z" fill={`url(#${gloss})`} />
 
-      {/* Rolled rim */}
-      <ellipse cx="50" cy="22" rx="33.5" ry="6.8" fill="none" stroke={`url(#${rim})`} strokeWidth="3" />
-      <path d="M17.5 23.5 Q50 34 82.5 23.5" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.8" />
+      {/* Front of the rolled rim, in front of the papers */}
+      <path d={frontRim} fill="none" stroke={`url(#${rim})`} strokeWidth="3" />
+      <path d={`M${L + 1} 23.4 A${RX - 1} ${RY - 0.4} 0 0 0 ${R - 1} 23.4`} fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.8" />
       {/* Bottom edge */}
       <path d="M25.5 88.5 Q26.5 93 50 93 Q73.5 93 74.5 88.5" fill="none" stroke="#45484d" strokeWidth="1" opacity="0.7" />
     </Frame>
