@@ -806,7 +806,9 @@ export class DeskScene {
       this.settleFrames--;
     } else {
       this.settleFrames = 3;
-      if (this.flat) this.setFlat(false);
+      // Only a camera move needs the 3D layer; the lamp or the plant animating
+      // keep the OS flat (moving its DOM node would drop keyboard focus).
+      if (this.flat && this.camTween) this.setFlat(false);
     }
 
     const now = performance.now();
