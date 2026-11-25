@@ -108,6 +108,11 @@ export class DeskScene {
   private camTween: Tween | null = null;
   private plantWiggle = 0;
   private frame = 0;
+  /** True while the OS is shown as a plain 2D layer (zoomed in, camera still). */
+  private flat = false;
+  private flatHost!: HTMLDivElement;
+  private css3dTransform = "";
+  private flatDirty = true;
   /** When false the loop idles (hidden behind the loader or the phone OS). */
   private active = true;
   /** Frames still to draw while nothing moves in screen mode. */
@@ -167,6 +172,12 @@ export class DeskScene {
       pointerEvents: "none",
     });
     container.appendChild(this.renderer.domElement);
+
+    // Host for the "flat" screen (see setFlat): same place as the CSS3D layer,
+    // under the WebGL canvas and its transparent hole.
+    this.flatHost = document.createElement("div");
+    Object.assign(this.flatHost.style, { position: "absolute", inset: "0", zIndex: "0", overflow: "hidden", pointerEvents: "none" });
+    container.insertBefore(this.flatHost, this.renderer.domElement);
 
     // --- Camera ----------------------------------------------------------
     this.camera = new THREE.PerspectiveCamera(this.fovFor(width / height), width / height, 0.06, 40);
@@ -280,6 +291,7 @@ export class DeskScene {
 
   leaveScreen() {
     if (this.mode !== "screen") return;
+    this.setFlat(false);
     this.setScreenInteractive(false);
     this.setMode("desk");
     // Go back to wherever the visitor was looking from.
@@ -302,6 +314,78 @@ export class DeskScene {
    * Resolution of the OS shown on the display (CSS pixels). The DOM element
    * is resized and scaled so it always covers the same physical display.
    */
+  /**
+   * Switches the OS between the CSS3D layer (needed while the camera moves)
+   * and a flat 2D layer placed exactly over the display (camera at rest,
+   * looking straight at it). Chrome rasterizes large 3D-transformed layers in
+   * tiles that can show hairline seams and soft text; the flat layer has
+   * neither.
+   */
+  private setFlat(on: boolean) {
+    const el = this.opts.screenElement;
+    if (on && this.flat) {
+      if (this.flatDirty) this.placeFlat();
+      return;
+    }
+    if (on === this.flat) return;
+    this.flat = on;
+    if (on) {
+      this.css3dTransform = el.style.transform;
+      this.flatHost.appendChild(el);
+      this.placeFlat();
+    } else {
+      el.style.transform = this.css3dTransform;
+      el.style.transformOrigin = "";
+      el.style.left = "";
+      el.style.top = "";
+      // Back into the CSS3D camera element (the renderer would re-append it too).
+      this.cssRenderer.domElement.firstElementChild?.appendChild(el);
+    }
+  }
+
+  /** Projects the display on screen and places the flat OS layer over it. */
+  private placeFlat() {
+    const el = this.opts.screenElement;
+    const { container } = this.opts;
+    const q = this.monitor.screenPlane.getWorldQuaternion(new THREE.Quaternion());
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(q).multiplyScalar(SCREEN.width / 2);
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(q).multiplyScalar(SCREEN.height / 2);
+    const c = this.monitor.screenCenter;
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const [sx, sy] of [
+      [-1, -1],
+      [1, -1],
+      [1, 1],
+      [-1, 1],
+    ]) {
+      const p = c.clone().addScaledVector(right, sx).addScaledVector(up, sy).project(this.camera);
+      const x = ((p.x + 1) / 2) * container.clientWidth;
+      const y = ((1 - p.y) / 2) * container.clientHeight;
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+    }
+    const w = el.offsetWidth || 1;
+    let k = (maxX - minX) / w;
+    let x = minX;
+    let y = minY;
+    // Practically 1:1 (adaptive OS resolution): use exactly 1 for crisp text.
+    if (Math.abs(k - 1) < 0.02) {
+      x += ((maxX - minX) - w) / 2;
+      y += ((maxY - minY) - el.offsetHeight) / 2;
+      k = 1;
+    }
+    el.style.left = "0px";
+    el.style.top = "0px";
+    el.style.transformOrigin = "0 0";
+    el.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px) scale(${k})`;
+    this.flatDirty = false;
+  }
+
   setResolution(width: number, height: number) {
     const el = this.opts.screenElement;
     el.style.width = `${width}px`;
@@ -309,6 +393,7 @@ export class DeskScene {
     const s = (SCREEN.width / width) * CSS_SCALE;
     this.cssObject.scale.set(s, s, s);
     this.settleFrames = 3;
+    this.flatDirty = true;
   }
 
   /** Flies back to the default view of the desk. */
@@ -389,6 +474,7 @@ export class DeskScene {
     this.renderer.dispose();
     this.renderer.domElement.remove();
     this.cssRenderer.domElement.remove();
+    this.flatHost.remove();
   }
 
   /* ---------------------------------------------------------------------- */
@@ -587,6 +673,7 @@ export class DeskScene {
 
   private onResize = () => {
     this.settleFrames = 3;
+    this.flatDirty = true;
     const { container } = this.opts;
     const w = container.clientWidth;
     const h = container.clientHeight;
@@ -710,12 +797,18 @@ export class DeskScene {
     const animating = !!this.camTween || !!(this.lampTween && !this.lampTween.done) || this.plantWiggle > 0;
     if (this.mode === "screen" && !animating) {
       if (this.settleFrames <= 0) {
+        // At rest, facing the display: show the OS as a flat, pixel-aligned
+        // layer (sharp text, no GPU tile seams of 3D-transformed layers).
+        this.setFlat(true);
         this.clock.getDelta();
         return;
       }
       this.settleFrames--;
     } else {
       this.settleFrames = 3;
+      // Only a camera move needs the 3D layer; the lamp or the plant animating
+      // keep the OS flat (moving its DOM node would drop keyboard focus).
+      if (this.flat && this.camTween) this.setFlat(false);
     }
 
     const now = performance.now();
@@ -768,7 +861,7 @@ export class DeskScene {
     }
 
     this.renderer.render(this.scene, this.camera);
-    this.cssRenderer.render(this.cssScene, this.cssCamera);
+    if (!this.flat) this.cssRenderer.render(this.cssScene, this.cssCamera);
   };
 }
 

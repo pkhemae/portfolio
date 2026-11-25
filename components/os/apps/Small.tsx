@@ -107,12 +107,14 @@ export function Preview() {
         {/* The page grows with the zoom; the scroll area grows with it, so
             every part of the document stays reachable. */}
         <div className="p-6" style={{ width: `${Math.max(1, zoom) * 100}%` }}>
+          {/* Vector version of the PDF (converted with pdftocairo): the
+              browser redraws it sharp at every zoom level. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/cv.pdf.png"
+            src="/cv.svg"
             alt={`CV de ${PROFILE.name}`}
             className="block mx-auto bg-white shadow-[0_2px_14px_rgba(0,0,0,0.25)] max-w-none"
-            style={{ width: `${Math.min(1, zoom) * 100}%` }}
+            style={{ width: `${Math.min(1, zoom) * 100}%`, aspectRatio: "595.276 / 841.89" }}
             draggable={false}
             onLoad={() => {
               const el = scroller.current;

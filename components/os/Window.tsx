@@ -31,15 +31,23 @@ type DragMode = "move" | "e" | "s" | "se";
 
 export function TrafficLights({ focused, onClose, onMinimize, onZoom, canZoom = true }: { focused: boolean; onClose: () => void; onMinimize: () => void; onZoom: () => void; canZoom?: boolean }) {
   return (
-    <div className={`traffic flex items-center gap-2 ${focused ? "" : "traffic--blur"}`} data-no-drag>
+    // Each button is a 20×20 hit area around its 12 px light; the areas touch,
+    // so there is no dead space between the three buttons.
+    <div className={`traffic flex items-center ${focused ? "" : "traffic--blur"}`} data-no-drag>
       <button type="button" className="traffic-btn traffic-close" aria-label="Fermer" onClick={onClose}>
-        <svg viewBox="0 0 12 12"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" /></svg>
+        <span className="traffic-dot">
+          <svg viewBox="0 0 12 12"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" /></svg>
+        </span>
       </button>
       <button type="button" className="traffic-btn traffic-min" aria-label="Réduire dans le Dock" onClick={onMinimize}>
-        <svg viewBox="0 0 12 12"><path d="M3 6h6" /></svg>
+        <span className="traffic-dot">
+          <svg viewBox="0 0 12 12"><path d="M3 6h6" /></svg>
+        </span>
       </button>
       <button type="button" className="traffic-btn traffic-zoom" aria-label="Agrandir" onClick={onZoom} disabled={!canZoom}>
-        <svg viewBox="0 0 12 12"><path d="M4 8V4.6L7.4 8zM8 4v3.4L4.6 4z" fill="currentColor" stroke="none" /></svg>
+        <span className="traffic-dot">
+          <svg viewBox="0 0 12 12"><path d="M4 8V4.6L7.4 8zM8 4v3.4L4.6 4z" fill="currentColor" stroke="none" /></svg>
+        </span>
       </button>
     </div>
   );
@@ -132,12 +140,12 @@ export default function Window({
       onDoubleClick={onDoubleClick}
     >
       {chrome === "titlebar" ? (
-        <header data-drag className="mac-titlebar relative flex items-center h-[30px] shrink-0 px-3 select-none">
+        <header data-drag className="mac-titlebar relative flex items-center h-[30px] shrink-0 px-2 select-none">
           <TrafficLights focused={focused} onClose={onClose} onMinimize={onMinimize} onZoom={onToggleMaximize} canZoom={resizable && !compact} />
           <span className="absolute inset-x-24 text-center text-[13px] font-semibold truncate mac-title pointer-events-none">{title}</span>
         </header>
       ) : (
-        <div className="absolute left-[14px] top-[16px] z-20">
+        <div className="absolute left-[10px] top-[12px] z-20">
           <TrafficLights focused={focused} onClose={onClose} onMinimize={onMinimize} onZoom={onToggleMaximize} canZoom={resizable && !compact} />
         </div>
       )}
