@@ -228,14 +228,25 @@ button.menubar-item:hover,
 .mac-window:not(.mac-window--focused) .mac-title { color: var(--text-3); }
 
 .traffic-btn {
+  /* Generous hit area; the visible light is .traffic-dot. */
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  cursor: default;
+}
+.traffic-btn:disabled { cursor: default; }
+.traffic-dot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
   display: grid;
   place-items: center;
   box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.18);
+  transition: filter 0.1s ease;
 }
-.traffic-btn svg {
+.traffic-dot svg {
   width: 8px;
   height: 8px;
   stroke: rgba(0, 0, 0, 0.55);
@@ -243,13 +254,17 @@ button.menubar-item:hover,
   color: rgba(0, 0, 0, 0.55);
   opacity: 0;
 }
-.traffic:hover .traffic-btn svg { opacity: 1; }
-.traffic-close { background: #ff5f57; }
-.traffic-min { background: #febc2e; }
-.traffic-zoom { background: #28c840; }
-.traffic-zoom:disabled { background: #cfcfd3; }
-.traffic--blur .traffic-btn { background: #d0d0d4; }
-.os-dark .traffic--blur .traffic-btn { background: #4a4a4e; }
+.traffic:hover .traffic-dot svg { opacity: 1; }
+.traffic-btn:active:not(:disabled) .traffic-dot { filter: brightness(0.82); }
+.traffic-btn:focus-visible { outline: none; }
+.traffic-btn:focus-visible .traffic-dot { outline: 2px solid var(--accent); outline-offset: 1px; }
+.traffic-close .traffic-dot { background: #ff5f57; }
+.traffic-min .traffic-dot { background: #febc2e; }
+.traffic-zoom .traffic-dot { background: #28c840; }
+.traffic-zoom:disabled .traffic-dot { background: #cfcfd3; }
+.traffic--blur .traffic-dot { background: #d0d0d4 !important; }
+.os-dark .traffic--blur .traffic-dot { background: #4a4a4e !important; }
+.traffic-zoom:disabled .traffic-dot svg { opacity: 0 !important; }
 
 .mac-toolbar {
   background: var(--toolbar);
